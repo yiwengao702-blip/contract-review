@@ -1,0 +1,28 @@
+# ===== 环境与虚拟环境（用户要求不上传） =====
+.env
+.venv
+venv/
+env/
+
+# ===== Python 缓存与字节码 =====
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+.eggs/
+
+# ===== 运行时数据：用户上传的合同文件（含大体积二进制，非源码） =====
+data/uploads/
+# 运行时状态目录
+data/risk_state/
+
+# ===== 日志 =====
+*.log
+
+# ===== 编辑器 / 系统文件 =====
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

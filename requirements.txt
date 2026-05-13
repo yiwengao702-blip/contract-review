@@ -1,0 +1,25 @@
+# 合同审批审查系统 - 依赖清单
+# 安装：pip install -r requirements.txt
+# 说明：核心依赖仅 fastapi/uvicorn/python-docx/pdfplumber/pyyaml。
+#       「拍照 / 图片识别」为可选能力，由 services/ocr_service.py 在运行时探测引擎可用性：
+#         任一引擎可用 → 自动使用；全部不可用 → 明确提示原因并降级为人工录入（不会静默失败）。
+
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+python-docx==1.1.0
+pdfplumber==0.11.3
+pyyaml==6.0.2
+pydantic==2.9.2
+python-multipart==0.0.12
+
+# ---- 可选：拍照 / 图片识别的依赖 ----
+# 说明：
+#   · Pillow + numpy 用于「图片体检」（分辨率/清晰度/亮度/对比度 → 给出重拍建议）。
+#     未安装时体检自动跳过，不影响识别与审查主流程。
+#   · pytesseract 为本地离线 OCR 引擎，除 Python 包外还须安装 Tesseract-OCR 程序
+#     并在安装时勾选中文语言包 chi_sim（否则中文识别会明显退化）。
+#   · vlm（多模态大模型识图）与 cloud（云 OCR 接口）两个引擎不需要额外依赖，
+#     但需要分别在 config.py 中配置 LLM_* 或 OCR_API_URL / OCR_API_KEY。
+Pillow==10.4.0
+numpy==1.26.4
+# pytesseract==0.3.13

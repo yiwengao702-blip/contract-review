@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>合同审批审查系统</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="logo">📑</span>
+      <span>合同审批审查系统</span>
+    </div>
+    <nav class="nav">
+      <a href="#dashboard" data-view="dashboard">审查大盘</a>
+      <a href="#rules" data-view="rules">合规规则与模板</a>
+      <a href="#export" data-view="export">失败外发审核</a>
+    </nav>
+    <div class="user-box" id="userBox"></div>
+  </aside>
+
+  <main id="app">
+    <!-- ============ 审查大盘 ============ -->
+    <section id="dashboard" class="view">
+      <div class="rl-head">
+        <div class="rl-head-text">
+          <h2 class="rl-title">审查大盘</h2>
+          <p class="rl-sub">上传合同即触发智能解析与风险研判；下方按状态与风险等级筛选，掌握每份合同的审查进展与风险分布。</p>
+        </div>
+        <div class="rl-head-btns">
+          <input type="file" id="fileInput"
+                 accept=".docx,.doc,.pdf,.png,.jpg,.jpeg,.bmp,.tif,.tiff,.webp,.txt,.md" hidden />
+          <button id="uploadBtn" class="btn primary">＋ 上传合同并审查</button>
+          <button id="scanBtn" class="btn scan-btn" title="用手机拍下合同纸质件，识别成正文后再审查">
+            📷 拍照识别合同
+          </button>
+        </div>
+      </div>
+      <div class="toolbar">
+        <select id="filterRisk" class="select">
+          <option value="">全部风险等级</option>
+          <option value="high">高风险</option>
+          <option value="medium">中风险</option>
+          <option value="low">低风险</option>
+        </select>
+        <select id="filterStatus" class="select">
+          <option value="">全部状态</option>
+          <option value="pending">待处理</option>
+          <option value="parsing">解析中</option>
+          <option value="checking">类型校验中</option>
+          <option value="reviewing">审查中</option>
+          <option value="blocked">解析受阻</option>
+          <option value="rejected">已拒绝（非合同）</option>
+          <option value="completed">审查完成</option>
+        </select>
+      </div>
+      <div id="statsBar" class="stat-cards"></div>
+      <div id="taskTable" class="card table-card">
+        <table class="task-table">
+          <thead>
+            <tr>
+              <th>合同名称</th><th>业务类型</th><th>金额</th>
+              <th>状态</th><th>综合风险</th><th>创建时间</th><th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="taskBody"></tbody>
+        </table>
+        <div id="emptyHint" class="empty">尚未录入合同任务。点击上方「上传合同并审查」，即可开始智能解析与风险研判。</div>
+      </div>
+    </section>
+
+    <!-- ============ 双栏工作台 ============ -->
+    <section id="workbench" class="view hidden">
+      <div class="wb-back"><a href="#dashboard">← 返回大盘</a></div>
+      <div class="workbench">
+        <!-- 左：合同正文 + 高亮 -->
+        <div class="pane left-pane">
+          <div class="pane-title">合同正文（风险条款已高亮）</div>
+          <div id="contractView" class="contract-view"></div>
+        </div>
+        <!-- 右：风险卡片 + 协同回写 -->
+        <div class="pane right-pane">
+          <div class="pane-title">审查结果与建议</div>
+          <div id="riskSummary" class="risk-summary"></div>
+          <div id="riskCards" class="risk-cards"></div>
+          <div class="pane-title">审批协同与回写</div>
+          <textarea id="legalNote" class="note" placeholder="法务人工批注（可选）..."></textarea>
+          <div class="wb-actions">
+            <button id="writeBackBtn" class="btn primary">一键回写审批单</button>
+            <button id="exportMdBtn" class="btn">导出 Markdown</button>
+            <button id="printBtn" class="btn">打印 / 导出 PDF</button>
+          </div>
+          <div id="writeBackStatus" class="wb-status"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 合规规则与模板 ============ -->
+    <section id="rules" class="view hidden">
+      <!-- 页头：标题 + 说明 + 工具栏 -->
+      <div class="rl-head">
+        <div class="rl-head-text">
+          <h2 class="rl-title">合规规则与模板</h2>
+          <p class="rl-sub">按合同类型维护审查规则项、触发条件、风险分级与标准示范条款库；规则与模板变更即时生效于后续审查任务。</p>
+        </div>
+        <div class="rl-head-btns">
+          <button id="rlRefreshBtn" class="btn rl-ghost-btn">↻ 刷新</button>
+          <button id="rlAddBtn" class="btn primary">＋ 新增示范条款</button>
+        </div>
+      </div>
+
+      <!-- 三个标签页：审查规则库 / 标准示范条款库 / 主体资质库 -->
+      <div class="rl-tabs" id="rlTabs">
+        <button class="rl-tab active" data-tab="rules">审查规则库 <span class="rl-tab-n" id="rlN-rules">—</span></button>
+        <button class="rl-tab" data-tab="clauses">标准示范条款库 <span class="rl-tab-n" id="rlN-clauses">—</span></button>
+        <button class="rl-tab" data-tab="quals">主体资质库 <span class="rl-tab-n" id="rlN-quals">—</span></button>
+      </div>
+
+      <!-- 筛选工具条：把「左侧分面栏」收进顶部横向铺开，主区让给卡片网格。
+           改版动机：分面栏占掉 200px 横向空间，却只承载两个筛选组；
+           规则条目本身是"一条一款"的独立对象，用表格压缩成一行反而看不到重点。 -->
+      <div class="rl-filterbar">
+        <div class="rl-fb-top">
+          <div class="rl-search-wrap">
+            <span class="rl-search-icon">🔍</span>
+            <input id="rlSearch" class="rl-search" type="search" placeholder="搜索规则名称 / 编号" />
+          </div>
+          <!-- 风险分级速筛：把"有几条高风险"这类最常问的问题前置成一次点击 -->
+          <div class="rl-lv-chips" id="rlLvChips"></div>
+          <div class="rl-fb-stat" id="rlResultStat"></div>
+          <button id="rlClearBtn" class="rl-clear-btn hidden">✕ 清空筛选</button>
+        </div>
+
+        <div class="rl-fb-row">
+          <span class="rl-fb-label" id="rlDimLabel">审查维度</span>
+          <div class="rl-chips" id="rlDimChips"></div>
+        </div>
+        <div class="rl-fb-row">
+          <span class="rl-fb-label" id="rlBizLabel">业务类型覆盖</span>
+          <div class="rl-chips" id="rlBizChips"></div>
+        </div>
+      </div>
+
+      <!-- 主区：卡片网格（一条一张卡，替代原表格） -->
+      <div class="rl-grid" id="rlGrid"></div>
+      <div id="rlEmpty" class="rl-empty hidden">没有符合条件的记录</div>
+    </section>
+
+    <!-- ============ 失败外发审核（钉钉） ============ -->
+    <!-- 链路：审查失败 → 条件门禁筛掉噪音 → 责任人确认 → 推送钉钉群
+         中间那层人工确认不是多余的：条件只能判"该不该发"，判不了"时机对不对"，
+         而对外的群消息发出去就收不回来。 -->
+    <section id="export" class="view hidden">
+      <div class="rl-head">
+        <div class="rl-head-text">
+          <h2 class="rl-title">失败外发审核</h2>
+          <p class="rl-sub">
+            审查失败（解析受阻 / 非合同被拒）的任务先过一层条件门禁筛掉噪音，再由责任人确认后才推送钉钉群；
+            被条件拦下的任务同样留痕，便于回溯「为何该失败没有外发」。
+          </p>
+        </div>
+        <div class="rl-head-btns">
+          <button id="exScanBtn" class="btn rl-ghost-btn">↻ 扫描失败任务</button>
+          <button id="exTestBtn" class="btn rl-ghost-btn">📡 通道测试</button>
+        </div>
+      </div>
+
+      <!-- 条件配置 -->
+      <div class="ex-card">
+        <div class="ex-card-head">
+          <span class="ex-card-title">外发触发条件</span>
+          <span class="ex-labels" id="exCondLabels"></span>
+        </div>
+        <div class="ex-form">
+          <div class="ex-field">
+            <span class="ex-label">纳入的失败类型</span>
+            <div class="ex-checks" id="exKinds"></div>
+            <div class="ex-tip" id="exKindTip"></div>
+          </div>
+          <div class="ex-field">
+            <label class="ex-label" for="exMinRetries">已重试次数下限</label>
+            <input id="exMinRetries" class="ex-input" type="number" min="0" step="1" value="0" />
+            <div class="ex-tip">填 0 表示不限（首次失败即可进队列）；填 2 表示「重试过两次仍失败」才提醒，
+              用来滤掉"换一份文件就好了"的偶发失败。</div>
+          </div>
+          <div class="ex-field">
+            <label class="ex-label" for="exExtensions">文件类型（留空不限）</label>
+            <input id="exExtensions" class="ex-input" type="text" placeholder="如 pdf, docx" />
+            <div class="ex-tip">只关注某几类文件时填写，逗号分隔。</div>
+          </div>
+          <div class="ex-field">
+            <span class="ex-label">正文来源</span>
+            <div class="ex-checks" id="exSources"></div>
+            <div class="ex-tip">都不勾选表示不限来源。</div>
+          </div>
+          <div class="ex-field">
+            <label class="ex-label" for="exKeywords">失败原因关键词（留空不限）</label>
+            <input id="exKeywords" class="ex-input" type="text" placeholder="如 加密, 扫描件, OCR" />
+            <div class="ex-tip">命中任一关键词即通过，用于只盯特定类型的失败原因。</div>
+          </div>
+          <div class="ex-field">
+            <span class="ex-label">重复外发</span>
+            <label class="ex-check-line">
+              <input type="checkbox" id="exDedupe" checked />
+              <span>同一任务已推送过则不再入队</span>
+            </label>
+          </div>
+        </div>
+        <div class="ex-foot">
+          <button id="exCondSave" class="btn primary">保存条件</button>
+          <button id="exCondReset" class="btn">恢复默认</button>
+          <span id="exCondHint" class="field-hint ex-hint"></span>
+        </div>
+      </div>
+
+      <!-- 待人工审核 -->
+      <div class="ex-sec-title">待人工审核<span class="ex-sec-n" id="exPendingN">0</span></div>
+      <div id="exPendingList" class="ex-list"></div>
+
+      <!-- 处理记录 -->
+      <div class="ex-sec-title">处理记录<span class="ex-sec-n" id="exHistoryN">0</span></div>
+      <div class="ex-chips" id="exStatusChips"></div>
+      <div id="exHistoryList" class="ex-list"></div>
+
+      <!--
+        审计留痕：上面两块说的是「现在什么状态」，这块回答「为什么变成了这个状态」——
+        谁能查、谁批的、谁驳的、以及被条件拦下时的具体理由。
+        外发钉钉是不可撤回的对外动作，事后追责只能靠这份流水。
+      -->
+      <div class="ex-sec-title">审计留痕<span class="ex-sec-n" id="exAuditN">0</span></div>
+      <div class="ex-audit" id="exAuditList"></div>
+    </section>
+  </main>
+
+  <!-- ============ 业务类型选择弹窗（替代浏览器原生 prompt） ============ -->
+  <div id="bizModal" class="modal-mask hidden">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="bizModalTitle">
+      <div class="modal-head">
+        <span class="modal-icon">📄</span>
+        <div>
+          <div class="modal-title" id="bizModalTitle">选择业务类型</div>
+          <div class="modal-sub">用于匹配对应的审查规则维度与示范条款</div>
+        </div>
+      </div>
+      <div class="modal-body">
+        <label class="field-label" for="bizTypeSelect">业务类型</label>
+        <select id="bizTypeSelect" class="select modal-select">
+          <option value="采购">采购合同</option>
+          <option value="销售">销售合同</option>
+          <option value="服务">服务合同</option>
+          <option value="劳动">劳动合同</option>
+          <option value="租赁">租赁合同</option>
+          <option value="技术">技术合同</option>
+          <option value="未分类">其他 / 未分类</option>
+        </select>
+        <div class="field-hint">所选文件：<b id="bizFileName">—</b></div>
+      </div>
+      <div class="modal-foot">
+        <button id="bizCancelBtn" class="btn ghost">取消</button>
+        <button id="bizOkBtn" class="btn primary">确定并审查</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 新增示范条款弹窗 ============ -->
+  <div id="clauseModal" class="modal-mask hidden">
+    <div class="modal modal-wide" role="dialog" aria-modal="true" aria-labelledby="clauseModalTitle">
+      <div class="modal-head">
+        <span class="modal-icon">📝</span>
+        <div>
+          <div class="modal-title" id="clauseModalTitle">新增示范条款</div>
+          <div class="modal-sub">保存后写入标准示范条款库，可直接被同维度风险的建议引用</div>
+        </div>
+      </div>
+      <div class="modal-body">
+        <label class="field-label" for="clauseTitle">条款名称</label>
+        <input id="clauseTitle" class="modal-input" placeholder="如：逾期付款违约金条款" />
+        <label class="field-label" for="clauseCategory">关联审查维度</label>
+        <select id="clauseCategory" class="select modal-select"></select>
+        <label class="field-label" for="clauseText">示范条款正文</label>
+        <textarea id="clauseText" class="note modal-textarea"
+          placeholder="填写可直接落地的示范条款文本，待填项用【】标注（如：【3】年、【20】%）"></textarea>
+        <div class="field-hint" id="clauseHint">留空的待填项建议用【】标注，便于法务逐项确认。</div>
+      </div>
+      <div class="modal-foot">
+        <button id="clauseCancelBtn" class="btn ghost">取消</button>
+        <button id="clauseOkBtn" class="btn primary">保存条款</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 拍照 / 图片识别弹窗（支持多张照片 = 多页合同） ============ -->
+  <div id="scanModal" class="modal-mask hidden">
+    <div class="modal modal-scan" role="dialog" aria-modal="true" aria-labelledby="scanModalTitle">
+      <div class="modal-head">
+        <span class="modal-icon">📷</span>
+        <div>
+          <div class="modal-title" id="scanModalTitle">拍照 / 图片识别合同</div>
+          <div class="modal-sub">可一次拍/选多张照片（多页合同逐页拍）→ 自动识别 → 逐页校对后按页码顺序送入同一套审查链路</div>
+        </div>
+      </div>
+      <div class="modal-body">
+        <!-- 引擎能力现状：打开弹窗即展示，避免"识别失败才发现没装引擎" -->
+        <div class="scan-providers" id="scanProviders"></div>
+
+        <!-- 添加照片区。
+             刻意分成两个入口：「拍照」带 capture 属性直接调起后置摄像头，
+             「选择图片」不带 capture 但带 multiple 以便一次从相册多选。
+             两者不能合并成一个 input：移动端同时给 multiple 与 capture 时，
+             多数浏览器会忽略 multiple，导致"说好能多选却只能拍一张"。 -->
+        <div class="scan-drop" id="scanDrop">
+          <input type="file" id="scanInput" accept="image/*" capture="environment" hidden />
+          <input type="file" id="scanInputMulti" accept="image/*" multiple hidden />
+          <input type="file" id="scanInputReplace" accept="image/*" capture="environment" hidden />
+          <div class="scan-drop-row">
+            <button id="scanShootBtn" type="button" class="btn primary">📷 拍照</button>
+            <button id="scanPickBtn" type="button" class="btn">🖼 选择图片（可多张）</button>
+          </div>
+          <span class="scan-drop-hint" id="scanDropHint">
+            支持 JPG / PNG / BMP / TIFF / WEBP，可多张一次识别；也可把照片直接拖进来
+          </span>
+        </div>
+
+        <!-- 页列表：每页一张卡片（缩略图 + 体检 + 识别过程 + 可编辑正文）。
+             由 JS 按 SCAN.pages 渲染，这里只留容器。 -->
+        <div class="scan-pages" id="scanPages"></div>
+
+        <!-- 整批汇总：几页成功、哪几页没认出来 -->
+        <div class="scan-summary hidden" id="scanSummary"></div>
+
+        <label class="field-label" for="scanBizType">业务类型</label>
+        <select id="scanBizType" class="select modal-select">
+          <option value="采购">采购合同</option>
+          <option value="销售">销售合同</option>
+          <option value="服务">服务合同</option>
+          <option value="劳动">劳动合同</option>
+          <option value="租赁">租赁合同</option>
+          <option value="技术">技术合同</option>
+          <option value="未分类">其他 / 未分类</option>
+        </select>
+
+        <div class="field-hint" id="scanHint">
+          各页正文按页码顺序合并成一份合同，提交后经过「合同文档闸门 → 规则引擎 → 语义审查」完整流程。
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button id="scanCancelBtn" class="btn ghost">取消</button>
+        <button id="scanRetryBtn" class="btn hidden">↻ 重试未识别页</button>
+        <button id="scanSubmitBtn" class="btn primary" disabled>提交审查</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 退出登录确认弹窗 ============ -->
+  <!-- 退出会清掉本地会话，是会话级且不可撤销的操作，所以先确认再执行；
+       复用全站统一的 .modal 组件，观感与其他业务弹窗一致。
+       弹窗里把"正要退出哪个身份"摆出来，避免多账号场景下退错账号。 -->
+  <div id="logoutModal" class="modal-mask hidden">
+    <div class="modal modal-confirm" role="dialog" aria-modal="true" aria-labelledby="logoutModalTitle">
+      <div class="modal-head">
+        <span class="modal-icon">🚪</span>
+        <div>
+          <div class="modal-title" id="logoutModalTitle">确认退出登录</div>
+          <div class="modal-sub">退出后需重新验证身份才能进入系统</div>
+        </div>
+      </div>
+      <div class="modal-body">
+        <div class="confirm-card">
+          <span class="confirm-avatar" id="logoutAvatar">—</span>
+          <span class="confirm-meta">
+            <span class="confirm-name" id="logoutName">—</span>
+            <span class="confirm-role" id="logoutRole">—</span>
+          </span>
+        </div>
+        <p class="confirm-text">
+          未回写的法务批注、未提交的识别正文与筛选条件都不会保留。
+        </p>
+      </div>
+      <div class="modal-foot">
+        <button id="logoutCancelBtn" class="btn ghost">取消</button>
+        <button id="logoutOkBtn" class="btn primary">确认退出</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

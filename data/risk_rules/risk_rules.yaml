@@ -1,0 +1,209 @@
+# 文件位置: contract-review/data/risk_rules/risk_rules.yaml
+# 功能说明: 电商业务事件风控规则库。
+#          规则引擎对「特征快照」求值：每条规则声明适用的事件类型(scope)、触发条件
+#          (conditions)、命中后累加的风险分(score)、风险等级(level)与建议动作(action)。
+#          条件字段名均来自 core/risk_models.FeatureSnapshot 的字段；布尔字段用 op: "==" 比对 true/false。
+#
+#          决策仲裁（services/risk_rule_engine.arbitrate）：
+#            ① 名单优先：黑名单直接拦截、白名单免审放行；
+#            ② 任一规则建议 block 或累计分 ≥ 60 → 拦截(BLOCK)；
+#            ③ 命中建议 review 的规则 或 累计分 ≥ 30 或最高命中等级为 high → 人工审核(REVIEW)；
+#            ④ 其余 → 放行(PASS)。
+rules:
+  # ---------------- 设备环境类 ----------------
+  - id: r_device_emulator
+    name: 模拟器/改机环境
+    category: 设备环境
+    scope: [login, order, payment, marketing]
+    match: all
+    conditions:
+      - {field: is_emulator, op: "==", value: true}
+    score: 50
+    level: high
+    action: block
+    enabled: true
+    advice: 模拟器环境常见于黑产批量操作，建议直接拦截并标记设备指纹。
+
+  - id: r_device_rotation
+    name: 秒拨/频繁换IP
+    category: 设备环境
+    scope: []
+    match: all
+    conditions:
+      - {field: is_ip_rotation, op: "==", value: true}
+    score: 50
+    level: high
+    action: block
+    enabled: true
+    advice: 秒拨IP是黑产规避封禁的典型手段，建议直接拦截。
+
+  - id: r_device_proxy
+    name: 代理IP接入
+    category: 设备环境
+    scope: []
+    match: all
+    conditions:
+      - {field: is_proxy, op: "==", value: true}
+    score: 20
+    level: medium
+    action: review
+    enabled: true
+    advice: 代理IP常见于批量操作，转人工核验账号真实性。
+
+  - id: r_device_vpn
+    name: VPN接入
+    category: 设备环境
+    scope: []
+    match: all
+    conditions:
+      - {field: is_vpn, op: "==", value: true}
+    score: 15
+    level: medium
+    action: review
+    enabled: true
+    advice: VPN接入需结合其他信号综合判断。
+
+  - id: r_ip_risk
+    name: IP风险分偏高
+    category: 设备环境
+    scope: []
+    match: all
+    conditions:
+      - {field: ip_risk_score, op: ">=", value: 0.5}
+    score: 25
+    level: medium
+    action: review
+    enabled: true
+    advice: IP归属地异常/代理叠加，建议人工核验。
+
+  # ---------------- 行为频次类 ----------------
+  - id: r_reg_burst
+    name: 短时批量注册
+    category: 行为频次
+    scope: [register]
+    match: all
+    conditions:
+      - {field: reg_count, op: ">=", value: 5}
+    score: 60
+    level: high
+    action: block
+    enabled: true
+    advice: 同一账号窗口内多次注册或设备批量注册，疑似小号养号，直接拦截。
+
+  - id: r_login_fail
+    name: 登录失败频繁
+    category: 行为频次
+    scope: [login]
+    match: all
+    conditions:
+      - {field: login_fail_times, op: ">=", value: 5}
+    score: 25
+    level: medium
+    action: review
+    enabled: true
+    advice: 高频登录失败疑似撞库/盗号，转人工核验。
+
+  - id: r_login_burst
+    name: 短时登录频次过高
+    category: 行为频次
+    scope: [login]
+    match: all
+    conditions:
+      - {field: login_count, op: ">=", value: 10}
+    score: 20
+    level: medium
+    action: review
+    enabled: true
+    advice: 单账号窗口内登录次数异常，建议人工核验。
+
+  - id: r_order_burst
+    name: 短时高频下单
+    category: 行为频次
+    scope: [order]
+    match: all
+    conditions:
+      - {field: order_count, op: ">=", value: 10}
+    score: 25
+    level: medium
+    action: review
+    enabled: true
+    advice: 高频下单疑似刷单/占库存，转人工核验。
+
+  - id: r_pay_no_order
+    name: 无下单记录却支付
+    category: 支付风险
+    scope: [payment]
+    match: all
+    conditions:
+      - {field: order_count, op: "<=", value: 0}
+    score: 20
+    level: medium
+    action: review
+    enabled: true
+    advice: 窗口内无下单却有支付，疑似支付异常或测试攻击，转人工核验。
+
+  - id: r_acct_new_highrisk
+    name: 新号高危操作
+    category: 账号异常
+    scope: [payment, marketing]
+    match: all
+    conditions:
+      - {field: account_age_days, op: "<=", value: 1}
+    score: 15
+    level: medium
+    action: review
+    enabled: true
+    advice: 注册不足1天即参与支付/营销，疑似接码小号，建议人工核验。
+
+  - id: r_distinct_ip
+    name: 单账号多IP
+    category: 账号异常
+    scope: []
+    match: all
+    conditions:
+      - {field: distinct_ip_count, op: ">=", value: 5}
+    score: 20
+    level: medium
+    action: review
+    enabled: true
+    advice: 账号短时间内跨越多个IP，疑似共享/盗用，转人工核验。
+
+  - id: r_distinct_device
+    name: 单账号多设备
+    category: 账号异常
+    scope: []
+    match: all
+    conditions:
+      - {field: distinct_device_count, op: ">=", value: 4}
+    score: 15
+    level: low
+    action: review
+    enabled: true
+    advice: 账号多设备登录，结合其他信号判断是否为共享账号。
+
+  # ---------------- 营销薅羊毛类 ----------------
+  - id: r_mkt_coupon_abuse
+    name: 高频领取优惠券
+    category: 营销薅羊毛
+    scope: [marketing]
+    match: all
+    conditions:
+      - {field: marketing_count, op: ">=", value: 8}
+    score: 55
+    level: high
+    action: block
+    enabled: true
+    advice: 短时间高频领券疑似脚本薅羊毛，直接拦截并限制活动参与。
+
+  - id: r_mkt_device_farm
+    name: 设备农场-单设备多账号
+    category: 营销薅羊毛
+    scope: [register, marketing]
+    match: all
+    conditions:
+      - {field: device_bind_count, op: ">=", value: 3}
+    score: 55
+    level: high
+    action: block
+    enabled: true
+    advice: 同一设备绑定多个账号，典型设备农场，直接拦截相关设备。

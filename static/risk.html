@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>电商业务风控中心</title>
+  <style>
+    :root {
+      --rk-bg: #f3f5f9; --rk-card: #fff; --rk-line: #e3e8f0; --rk-text: #1f2a3d;
+      --rk-sub: #6b7689; --rk-primary: #2f6bff; --rk-primary-d: #1f4fd0;
+      --rk-high: #e23b3b; --rk-medium: #f59e0b; --rk-low: #16a34a;
+      --rk-shadow: 0 2px 10px rgba(31,42,61,.06);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: -apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+      background: var(--rk-bg); color: var(--rk-text); font-size: 14px; }
+    .rk-topbar { height: 54px; background: #16213a; color: #fff; display: flex;
+      align-items: center; justify-content: space-between; padding: 0 22px; }
+    .rk-brand { font-size: 17px; font-weight: 700; letter-spacing: .5px; }
+    .rk-user { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+    .rk-user button { background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.25);
+      color: #fff; padding: 6px 14px; border-radius: 6px; cursor: pointer; }
+    .rk-user button:hover { background: rgba(255,255,255,.22); }
+    .rk-layout { display: flex; min-height: calc(100vh - 54px); }
+    .rk-side { width: 184px; background: #1d2a4a; padding: 14px 10px; flex-shrink: 0; }
+    .rk-side a { display: block; color: #c3cde0; padding: 11px 14px; border-radius: 8px;
+      cursor: pointer; margin-bottom: 4px; font-size: 13.5px; }
+    .rk-side a:hover { background: rgba(255,255,255,.07); color: #fff; }
+    .rk-side a.active { background: var(--rk-primary); color: #fff; font-weight: 600; }
+    .rk-main { flex: 1; padding: 20px 24px; overflow: auto; }
+    .rk-tab { display: none; } .rk-tab.active { display: block; }
+    .rk-h { font-size: 18px; font-weight: 700; margin: 0 0 4px; }
+    .rk-desc { color: var(--rk-sub); margin: 0 0 16px; font-size: 13px; }
+    .rk-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); gap: 14px; margin-bottom: 18px; }
+    .rk-stat { background: var(--rk-card); border: 1px solid var(--rk-line); border-radius: 10px;
+      padding: 16px; box-shadow: var(--rk-shadow); }
+    .rk-stat .v { font-size: 26px; font-weight: 700; }
+    .rk-stat .l { color: var(--rk-sub); font-size: 12.5px; margin-top: 4px; }
+    .rk-panel { background: var(--rk-card); border: 1px solid var(--rk-line); border-radius: 10px;
+      padding: 18px; box-shadow: var(--rk-shadow); margin-bottom: 18px; }
+    .rk-panel h3 { margin: 0 0 14px; font-size: 15px; }
+    .rk-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    @media (max-width: 880px){ .rk-grid2 { grid-template-columns: 1fr; } }
+    .rk-btn { background: var(--rk-primary); color: #fff; border: none; padding: 8px 16px;
+      border-radius: 6px; cursor: pointer; font-size: 13px; }
+    .rk-btn:hover { background: var(--rk-primary-d); }
+    .rk-btn.ghost { background: #eef2fb; color: var(--rk-primary); }
+    .rk-btn.danger { background: #fdecec; color: var(--rk-high); }
+    .rk-btn:disabled { opacity: .5; cursor: not-allowed; }
+    .rk-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    table.rk { width: 100%; border-collapse: collapse; font-size: 13px; }
+    table.rk th, table.rk td { border-bottom: 1px solid var(--rk-line); padding: 9px 10px; text-align: left; }
+    table.rk th { color: var(--rk-sub); font-weight: 600; background: #fafbfe; }
+    table.rk tr:hover td { background: #f7f9fd; }
+    .badge { display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+    .b-high { background: #fdecec; color: var(--rk-high); }
+    .b-medium { background: #fef3e2; color: var(--rk-medium); }
+    .b-low { background: #e7f6; color: var(--rk-low); }
+    .b-block { background: #fdecec; color: var(--rk-high); }
+    .b-review { background: #fef3e2; color: var(--rk-medium); }
+    .b-pass { background: #e7f7ee; color: var(--rk-low); }
+    .b-pending { background: #eef2fb; color: var(--rk-primary); }
+    .b-done { background: #e7f7ee; color: var(--rk-low); }
+    .rk-list { max-height: 560px; overflow: auto; }
+    .rk-item { border: 1px solid var(--rk-line); border-radius: 8px; padding: 12px 14px; margin-bottom: 10px; cursor: pointer; }
+    .rk-item:hover { border-color: var(--rk-primary); }
+    .rk-item.sel { border-color: var(--rk-primary); background: #f5f8ff; }
+    .rk-muted { color: var(--rk-sub); }
+    .rk-kv { display: grid; grid-template-columns: 120px 1fr; gap: 6px 12px; font-size: 13px; }
+    .rk-kv b { color: var(--rk-sub); font-weight: 600; }
+    input, select, textarea { font-family: inherit; border: 1px solid var(--rk-line); border-radius: 6px;
+      padding: 7px 10px; font-size: 13px; background: #fff; color: var(--rk-text); }
+    textarea { width: 100%; min-height: 150px; resize: vertical; font-family: ui-monospace,Menlo,Consolas,monospace; font-size: 12.5px; }
+    .rk-form { display: grid; gap: 10px; max-width: 520px; }
+    .rk-form label { font-size: 12.5px; color: var(--rk-sub); }
+    .rk-trace { font-family: ui-monospace,Menlo,Consolas,monospace; font-size: 12.5px;
+      background: #0f1729; color: #d7e3ff; padding: 14px; border-radius: 8px; white-space: pre-wrap; overflow: auto; max-height: 360px; }
+    .rk-hr { border: none; border-top: 1px dashed var(--rk-line); margin: 14px 0; }
+    .rk-msg { font-size: 12.5px; padding: 8px 12px; border-radius: 6px; margin-top: 10px; }
+    .rk-msg.ok { background: #e7f7ee; color: var(--rk-low); }
+    .rk-msg.err { background: #fdecec; color: var(--rk-high); }
+    .rk-switch { cursor: pointer; }
+  </style>
+</head>
+<body>
+  <header class="rk-topbar">
+    <div class="rk-brand">🛡 电商业务风控中心</div>
+    <div class="rk-user">
+      <span id="userName">—</span>
+      <button id="logoutBtn">退出</button>
+    </div>
+  </header>
+
+  <div class="rk-layout">
+    <nav class="rk-side">
+      <a data-tab="dashboard" class="active">态势大盘</a>
+      <a data-tab="workbench">审核工作台</a>
+      <a data-tab="rules">规则配置</a>
+      <a data-tab="lists">名单库</a>
+      <a data-tab="sim">仿真测试</a>
+      <a data-tab="history">判定历史</a>
+    </nav>
+
+    <main class="rk-main">
+      <!-- 态势大盘 -->
+      <section id="tab-dashboard" class="rk-tab active">
+        <h2 class="rk-h">态势大盘</h2>
+        <p class="rk-desc">实时拦截率、风险分布与规则命中排行。可一键载入内置示例事件（含设备农场+秒拨+薅券对抗场景）体验全链路。</p>
+        <div class="rk-row" style="margin-bottom:16px;">
+          <button class="rk-btn" id="loadSamples">载入示例事件并运行</button>
+          <button class="rk-btn ghost" id="resetEngine">清空运行态</button>
+          <span id="sampleMsg" class="rk-muted"></span>
+        </div>
+        <div class="rk-cards" id="dashCards"></div>
+        <div class="rk-grid2">
+          <div class="rk-panel">
+            <h3>风险分布</h3>
+            <div id="distChart"></div>
+          </div>
+          <div class="rk-panel">
+            <h3>规则命中排行 TOP10</h3>
+            <div id="ruleChart"></div>
+          </div>
+        </div>
+        <div class="rk-panel">
+          <h3>最近判定</h3>
+          <div class="rk-list" id="recentDecisions"></div>
+        </div>
+      </section>
+
+      <!-- 审核工作台 -->
+      <section id="tab-workbench" class="rk-tab">
+        <h2 class="rk-h">审核工作台</h2>
+        <p class="rk-desc">中高风险事件自动生成案件。点击案件查看用户画像、特征快照与关联证据，并完成人工复核与处置闭环。</p>
+        <div class="rk-grid2">
+          <div class="rk-panel">
+            <h3>待复核案件</h3>
+            <div class="rk-row" style="margin-bottom:10px;">
+              <select id="caseFilter"><option value="">全部状态</option>
+                <option value="pending">待复核</option><option value="approved">已通过</option>
+                <option value="rejected">已驳回</option><option value="closed">已结案</option></select>
+            </div>
+            <div class="rk-list" id="caseList"></div>
+          </div>
+          <div class="rk-panel">
+            <h3>案件详情与复核</h3>
+            <div id="caseDetail"><p class="rk-muted">从左侧选择案件查看详情</p></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 规则配置 -->
+      <section id="tab-rules" class="rk-tab">
+        <h2 class="rk-h">规则配置</h2>
+        <p class="rk-desc">按分类维护风控规则、触发条件、风险分级与建议动作。支持启停、新增与编辑（管理员）。</p>
+        <div class="rk-cards" id="ruleFacets"></div>
+        <div class="rk-panel">
+          <div class="rk-row" style="justify-content:space-between;">
+            <h3 style="margin:0;">规则列表</h3>
+            <button class="rk-btn" id="showAddRule">+ 新增规则</button>
+          </div>
+          <div id="addRuleBox" style="display:none; margin:14px 0;">
+            <div class="rk-form" id="addRuleForm">
+              <label>规则 ID（英文/数字，唯一）</label><input id="r_id" placeholder="r_custom_01" />
+              <label>规则名称</label><input id="r_name" placeholder="高频下单" />
+              <label>分类</label><input id="r_category" placeholder="行为频次" />
+              <label>适用事件类型（逗号分隔，空=全部）</label><input id="r_scope" placeholder="order,payment" />
+              <label>风险分</label><input id="r_score" type="number" value="30" />
+              <label>风险等级</label><select id="r_level"><option value="low">低风险</option><option value="medium" selected>中风险</option><option value="high">高风险</option></select>
+              <label>建议动作</label><select id="r_action"><option value="pass">放行</option><option value="review" selected>人工审核</option><option value="block">拦截</option></select>
+              <label>处置建议（命中说明）</label><input id="r_advice" placeholder="短时高频下单疑似刷单" />
+              <div class="rk-row"><button class="rk-btn" id="addRuleSubmit">提交新增</button><span id="addRuleMsg"></span></div>
+            </div>
+          </div>
+          <div class="rk-list" id="ruleList"></div>
+        </div>
+      </section>
+
+      <!-- 名单库 -->
+      <section id="tab-lists" class="rk-tab">
+        <h2 class="rk-h">名单库</h2>
+        <p class="rk-desc">维护用户 / 设备 / IP 维度的黑名单与白名单。黑名单直接拦截、白名单免审放行，优先级高于规则引擎。</p>
+        <div class="rk-grid2">
+          <div class="rk-panel">
+            <h3>新增名单</h3>
+            <div class="rk-form" id="listForm">
+              <label>类型</label><select id="l_type"><option value="black">黑名单</option><option value="white">白名单</option></select>
+              <label>维度</label><select id="l_dim"><option value="user">用户</option><option value="device">设备</option><option value="ip">IP</option></select>
+              <label>值（user_id / device_id / ip）</label><input id="l_value" placeholder="U1001" />
+              <label>原因</label><input id="l_reason" placeholder="设备农场" />
+              <div class="rk-row"><button class="rk-btn" id="addList">加入名单</button><span id="listMsg"></span></div>
+            </div>
+          </div>
+          <div class="rk-panel">
+            <h3>黑名单（<span id="blackCount">0</span>）</h3>
+            <div class="rk-list" id="blackList"></div>
+          </div>
+        </div>
+        <div class="rk-panel">
+          <h3>白名单（<span id="whiteCount">0</span>）</h3>
+          <div class="rk-list" id="whiteList"></div>
+        </div>
+      </section>
+
+      <!-- 仿真测试 -->
+      <section id="tab-sim" class="rk-tab">
+        <h2 class="rk-h">仿真测试</h2>
+        <p class="rk-desc">提交单条事件进行模拟检测，展示完整判定链路（特征快照 → 名单 → 规则逐条命中 → 决策），不污染运行态。</p>
+        <div class="rk-grid2">
+          <div class="rk-panel">
+            <h3>事件 JSON</h3>
+            <div class="rk-row" style="margin-bottom:10px;">
+              <button class="rk-btn ghost" id="simSample">载入示例事件</button>
+              <button class="rk-btn" id="simRun">运行判定</button>
+              <span id="simMsg"></span>
+            </div>
+            <textarea id="simInput"></textarea>
+          </div>
+          <div class="rk-panel">
+            <h3>判定链路回溯</h3>
+            <div id="simResult"><p class="rk-muted">运行后在此展示判定链路</p></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 判定历史 -->
+      <section id="tab-history" class="rk-tab">
+        <h2 class="rk-h">判定历史</h2>
+        <p class="rk-desc">每次事件接入的判定结论明细，可按动作筛选。</p>
+        <div class="rk-row" style="margin-bottom:12px;">
+          <select id="histFilter"><option value="">全部</option><option value="pass">放行</option>
+            <option value="review">人工审核</option><option value="block">拦截</option></select>
+        </div>
+        <div class="rk-panel"><div class="rk-list" id="histList"></div></div>
+      </section>
+    </main>
+  </div>
+
+  <script src="/static/risk.js"></script>
+</body>
+</html>

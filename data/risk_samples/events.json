@@ -1,0 +1,179 @@
+{
+  "description": "电商风控子系统示例事件集（含典型作弊对抗场景），可一键加载演示。",
+  "events": [
+    {
+      "event_id": "E-FARM-01", "event_type": "register", "user_id": "U1001",
+      "timestamp": "2026-09-21 10:00:00",
+      "device": {"device_id": "DEV-FARM-01", "ip": "1.2.3.4", "device_type": "手机", "is_proxy": true, "is_ip_rotation": true},
+      "payload": {"channel": "活动拉新", "invite_code": "ACT2026"}
+    },
+    {
+      "event_id": "E-FARM-02", "event_type": "register", "user_id": "U1002",
+      "timestamp": "2026-09-21 10:01:00",
+      "device": {"device_id": "DEV-FARM-01", "ip": "1.2.3.5", "device_type": "手机", "is_proxy": true, "is_ip_rotation": true},
+      "payload": {"channel": "活动拉新", "invite_code": "ACT2026"}
+    },
+    {
+      "event_id": "E-FARM-03", "event_type": "register", "user_id": "U1003",
+      "timestamp": "2026-09-21 10:02:00",
+      "device": {"device_id": "DEV-FARM-01", "ip": "1.2.3.6", "device_type": "手机", "is_proxy": true, "is_ip_rotation": true},
+      "payload": {"channel": "活动拉新", "invite_code": "ACT2026"}
+    },
+    {
+      "event_id": "E-FARM-04", "event_type": "register", "user_id": "U1004",
+      "timestamp": "2026-09-21 10:03:00",
+      "device": {"device_id": "DEV-FARM-01", "ip": "1.2.3.7", "device_type": "手机", "is_proxy": true, "is_ip_rotation": true},
+      "payload": {"channel": "活动拉新", "invite_code": "ACT2026"}
+    },
+    {
+      "event_id": "E-FARM-05", "event_type": "register", "user_id": "U1005",
+      "timestamp": "2026-09-21 10:04:00",
+      "device": {"device_id": "DEV-FARM-01", "ip": "1.2.3.8", "device_type": "手机", "is_proxy": true, "is_ip_rotation": true},
+      "payload": {"channel": "活动拉新", "invite_code": "ACT2026"}
+    },
+    {
+      "event_id": "E-FARM-06", "event_type": "register", "user_id": "U1006",
+      "timestamp": "2026-09-21 10:05:00",
+      "device": {"device_id": "DEV-FARM-01", "ip": "1.2.3.9", "device_type": "手机", "is_proxy": true, "is_ip_rotation": true},
+      "payload": {"channel": "活动拉新", "invite_code": "ACT2026"}
+    },
+    {
+      "event_id": "E-FARM-07", "event_type": "login", "user_id": "U1001",
+      "timestamp": "2026-09-21 10:06:00",
+      "device": {"device_id": "DEV-FARM-01", "ip": "1.2.3.10", "is_proxy": true, "is_ip_rotation": true},
+      "payload": {"login_result": "success"}
+    },
+    {
+      "event_id": "E-FARM-08", "event_type": "marketing", "user_id": "U1001",
+      "timestamp": "2026-09-21 10:07:00",
+      "device": {"device_id": "DEV-FARM-01", "ip": "1.2.3.11", "is_proxy": true, "is_ip_rotation": true},
+      "payload": {"activity_id": "COUPON-88", "activity_type": "领券", "coupon_id": "C-001"}
+    },
+    {
+      "event_id": "E-FARM-09", "event_type": "marketing", "user_id": "U1001",
+      "timestamp": "2026-09-21 10:08:00",
+      "device": {"device_id": "DEV-FARM-01", "ip": "1.2.3.12", "is_proxy": true, "is_ip_rotation": true},
+      "payload": {"activity_id": "COUPON-88", "activity_type": "领券", "coupon_id": "C-001"}
+    },
+    {
+      "event_id": "E-FARM-10", "event_type": "marketing", "user_id": "U1001",
+      "timestamp": "2026-09-21 10:09:00",
+      "device": {"device_id": "DEV-FARM-01", "ip": "1.2.3.13", "is_proxy": true, "is_ip_rotation": true},
+      "payload": {"activity_id": "COUPON-88", "activity_type": "领券", "coupon_id": "C-001"}
+    },
+    {
+      "event_id": "E-FARM-11", "event_type": "marketing", "user_id": "U1001",
+      "timestamp": "2026-09-21 10:10:00",
+      "device": {"device_id": "DEV-FARM-01", "ip": "1.2.3.14", "is_proxy": true, "is_ip_rotation": true},
+      "payload": {"activity_id": "COUPON-88", "activity_type": "领券", "coupon_id": "C-001"}
+    },
+    {
+      "event_id": "E-FARM-12", "event_type": "marketing", "user_id": "U1001",
+      "timestamp": "2026-09-21 10:11:00",
+      "device": {"device_id": "DEV-FARM-01", "ip": "1.2.3.15", "is_proxy": true, "is_ip_rotation": true},
+      "payload": {"activity_id": "COUPON-88", "activity_type": "领券", "coupon_id": "C-001"}
+    },
+    {
+      "event_id": "E-FARM-13", "event_type": "marketing", "user_id": "U1001",
+      "timestamp": "2026-09-21 10:12:00",
+      "device": {"device_id": "DEV-FARM-01", "ip": "1.2.3.16", "is_proxy": true, "is_ip_rotation": true},
+      "payload": {"activity_id": "COUPON-88", "activity_type": "领券", "coupon_id": "C-001"}
+    },
+    {
+      "event_id": "E-FARM-14", "event_type": "marketing", "user_id": "U1001",
+      "timestamp": "2026-09-21 10:13:00",
+      "device": {"device_id": "DEV-FARM-01", "ip": "1.2.3.17", "is_proxy": true, "is_ip_rotation": true},
+      "payload": {"activity_id": "COUPON-88", "activity_type": "领券", "coupon_id": "C-001"}
+    },
+    {
+      "event_id": "E-FARM-15", "event_type": "marketing", "user_id": "U1001",
+      "timestamp": "2026-09-21 10:14:00",
+      "device": {"device_id": "DEV-FARM-01", "ip": "1.2.3.18", "is_proxy": true, "is_ip_rotation": true},
+      "payload": {"activity_id": "COUPON-88", "activity_type": "领券", "coupon_id": "C-001"}
+    },
+    {
+      "event_id": "E-FARM-16", "event_type": "order", "user_id": "U1001",
+      "timestamp": "2026-09-21 10:15:00",
+      "device": {"device_id": "DEV-FARM-01", "ip": "1.2.3.19", "is_proxy": true, "is_ip_rotation": true},
+      "payload": {"order_amount": 0.01, "item_count": 1}
+    },
+    {
+      "event_id": "E-EMU-01", "event_type": "order", "user_id": "U3001",
+      "timestamp": "2026-09-21 10:20:00",
+      "device": {"device_id": "DEV-EMU-09", "ip": "5.6.7.8", "device_type": "模拟器", "is_emulator": true},
+      "payload": {"order_amount": 999, "item_count": 10}
+    },
+    {
+      "event_id": "E-NORMAL-01", "event_type": "register", "user_id": "U2001",
+      "timestamp": "2024-01-01 10:00:00",
+      "device": {"device_id": "DEV-NORM-01", "ip": "120.0.0.1", "device_type": "手机", "network": "wifi"},
+      "payload": {"channel": "自然注册"}
+    },
+    {
+      "event_id": "E-NORMAL-02", "event_type": "login", "user_id": "U2001",
+      "timestamp": "2026-09-21 10:30:00",
+      "device": {"device_id": "DEV-NORM-01", "ip": "120.0.0.1", "device_type": "手机", "network": "wifi"},
+      "payload": {"login_result": "success"}
+    },
+    {
+      "event_id": "E-NORMAL-03", "event_type": "order", "user_id": "U2001",
+      "timestamp": "2026-09-21 10:31:00",
+      "device": {"device_id": "DEV-NORM-01", "ip": "120.0.0.1", "device_type": "手机", "network": "wifi"},
+      "payload": {"order_amount": 299, "item_count": 2}
+    },
+    {
+      "event_id": "E-NORMAL-04", "event_type": "payment", "user_id": "U2001",
+      "timestamp": "2026-09-21 10:32:00",
+      "device": {"device_id": "DEV-NORM-01", "ip": "120.0.0.1", "device_type": "手机", "network": "wifi"},
+      "payload": {"pay_amount": 299, "pay_channel": "微信支付"}
+    },
+    {
+      "event_id": "E-BRUTE-01", "event_type": "login", "user_id": "U4001",
+      "timestamp": "2026-09-21 10:40:00",
+      "device": {"device_id": "DEV-BRUTE-01", "ip": "9.9.9.9", "device_type": "PC"},
+      "payload": {"login_result": "fail"}
+    },
+    {
+      "event_id": "E-BRUTE-02", "event_type": "login", "user_id": "U4001",
+      "timestamp": "2026-09-21 10:40:30",
+      "device": {"device_id": "DEV-BRUTE-01", "ip": "9.9.9.9", "device_type": "PC"},
+      "payload": {"login_result": "fail"}
+    },
+    {
+      "event_id": "E-BRUTE-03", "event_type": "login", "user_id": "U4001",
+      "timestamp": "2026-09-21 10:41:00",
+      "device": {"device_id": "DEV-BRUTE-01", "ip": "9.9.9.9", "device_type": "PC"},
+      "payload": {"login_result": "fail"}
+    },
+    {
+      "event_id": "E-BRUTE-04", "event_type": "login", "user_id": "U4001",
+      "timestamp": "2026-09-21 10:41:30",
+      "device": {"device_id": "DEV-BRUTE-01", "ip": "9.9.9.9", "device_type": "PC"},
+      "payload": {"login_result": "fail"}
+    },
+    {
+      "event_id": "E-BRUTE-05", "event_type": "login", "user_id": "U4001",
+      "timestamp": "2026-09-21 10:42:00",
+      "device": {"device_id": "DEV-BRUTE-01", "ip": "9.9.9.9", "device_type": "PC"},
+      "payload": {"login_result": "fail"}
+    },
+    {
+      "event_id": "E-BRUTE-06", "event_type": "login", "user_id": "U4001",
+      "timestamp": "2026-09-21 10:42:30",
+      "device": {"device_id": "DEV-BRUTE-01", "ip": "9.9.9.9", "device_type": "PC"},
+      "payload": {"login_result": "fail"}
+    },
+    {
+      "event_id": "E-NEWPAY-01", "event_type": "register", "user_id": "U5001",
+      "timestamp": "2026-09-21 11:00:00",
+      "device": {"device_id": "DEV-NEW-01", "ip": "7.7.7.7", "device_type": "手机", "is_proxy": true},
+      "payload": {"channel": "短信拉新"}
+    },
+    {
+      "event_id": "E-NEWPAY-02", "event_type": "payment", "user_id": "U5001",
+      "timestamp": "2026-09-21 11:01:00",
+      "device": {"device_id": "DEV-NEW-01", "ip": "7.7.7.7", "device_type": "手机", "is_proxy": true},
+      "payload": {"pay_amount": 1999, "pay_channel": "未知"}
+    }
+  ]
+}

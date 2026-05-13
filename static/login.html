@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>登录 · 企业合同审批智能审查系统</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body class="login-body">
+  <div class="login-wrap">
+    <!-- ============ 左侧：机构品牌区 ============ -->
+    <aside class="login-brand">
+      <!-- 机构抬头：徽记 + 平台名 + 部署标识 -->
+      <header class="brand-head">
+        <span class="brand-crest">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2.5 4.5 5.5v6c0 4.4 3.1 8.4 7.5 9.9 4.4-1.5 7.5-5.5 7.5-9.9v-6L12 2.5Z"/>
+            <path d="m9 12 2.2 2.2L15.2 10"/>
+          </svg>
+        </span>
+        <div class="brand-head-txt">
+          <div class="brand-org">企业合同审批智能审查平台</div>
+          <div class="brand-meta">内网部署 · 版本 V2.4</div>
+        </div>
+      </header>
+
+      <div class="brand-rule"></div>
+
+      <span class="pill">本地演示环境 · Local Demo</span>
+      <h1 class="login-title">企业合同审批<br />智能审查系统</h1>
+      <p class="login-desc">
+        对接审批系统待办，支持 Word / PDF / 扫描件多格式解析，结合合规规则引擎与大模型语义研判，
+        实现条款结构化切分、风险证据链输出、原文双向高亮定位与审查意见一键回写。
+      </p>
+
+      <ul class="login-feats">
+        <li>
+          <span class="feat-no">01</span>
+          <span class="feat-ico">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+          </span>
+          <span class="feat-txt">DOCX / PDF / 扫描件 OCR 三通道解析</span>
+        </li>
+        <li>
+          <span class="feat-no">02</span>
+          <span class="feat-ico">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>
+          </span>
+          <span class="feat-txt">主体资质 · 付款条件 · 违约责任 · 知识产权多维审查</span>
+        </li>
+        <li>
+          <span class="feat-no">03</span>
+          <span class="feat-ico">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1"/></svg>
+          </span>
+          <span class="feat-txt">风险卡片与原文双向锚定，逐条溯源定位</span>
+        </li>
+        <li>
+          <span class="feat-no">04</span>
+          <span class="feat-ico">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 5 5v6"/></svg>
+          </span>
+          <span class="feat-txt">审查意见自动回写与审批系统评论区</span>
+        </li>
+      </ul>
+
+      <!-- 底部：合规与安全标识条 + 免责声明 -->
+      <div class="brand-foot">
+        <div class="brand-marks">
+          <div class="mark">
+            <span class="mark-k">审查依据</span>
+            <span class="mark-v">《民法典》合同编</span>
+          </div>
+          <div class="mark">
+            <span class="mark-k">数据安全</span>
+            <span class="mark-v">本地内网 · 不出域</span>
+          </div>
+          <div class="mark">
+            <span class="mark-k">操作留痕</span>
+            <span class="mark-v">全流程可追溯</span>
+          </div>
+        </div>
+        <div class="login-footnote">
+          系统输出仅为法务辅助审查参考，最终结论须由法务人员人工复核确认，不构成正式法律意见。
+        </div>
+      </div>
+    </aside>
+
+    <!-- ============ 右侧：登录卡 ============ -->
+    <main class="login-panel">
+      <form class="login-card" id="loginForm" autocomplete="off">
+        <div class="card-head">
+          <h2 class="login-card-title">账号登录</h2>
+          <span class="secure-badge">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+            安全登录
+          </span>
+        </div>
+        <p class="login-card-sub">请使用演示账号（企业邮箱）登录，三种角色权限不同</p>
+
+        <div class="login-field">
+          <span class="f-ico">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 12 0v1"/></svg>
+          </span>
+          <input id="account" type="email" spellcheck="false" placeholder="企业邮箱" />
+        </div>
+
+        <div class="login-field">
+          <span class="f-ico">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+          </span>
+          <input id="password" type="password" placeholder="密码" />
+          <span class="f-eye" id="togglePwd" title="显示 / 隐藏密码">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+          </span>
+        </div>
+
+        <div class="login-error" id="loginError"></div>
+        <button type="submit" class="login-btn" id="loginBtn">登 录</button>
+
+        <div class="demo-head">
+          <span>演示账号（点击自动填充）</span>
+          <span class="demo-tag">统一密码见下</span>
+        </div>
+        <div class="demo-list" id="demoList"></div>
+      </form>
+    </main>
+  </div>
+
+  <script src="/static/login.js"></script>
+</body>
+</html>

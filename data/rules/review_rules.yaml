@@ -1,0 +1,206 @@
+# 合同合规审查规则库
+# 字段说明：
+#   id               规则编号（RULE-<维度缩写>-<序号>，同时是「合规规则与模板」页的展示编号）
+#   name             规则名称
+#   level            风险等级 high/medium/low
+#   category         审查维度（页面左侧分面与表格标签展示，如 主体资质/付款条件/知识产权）
+#   scope            适用范围：合同业务类型列表；["全部类型"] 表示对所有业务类型生效
+#   match_mode       匹配方式（页面展示用的人类可读判定方式）
+#   enabled          是否启用；置 false 后本规则不参与审查（页面开关可切换，即时生效）
+#   type             规则类型：
+#                      meta_missing    检查元数据字段是否缺失
+#                      meta_or_regex   元数据缺失或全文命中敏感表述（二者任一命中即报）
+#                      text_regex      全文/条款内正则命中（出现即风险）
+#                      text_absent     条款内缺少必备要件才风险（"存在条款但要件缺失"）
+#                      clause_missing  条款整体缺失才风险（按类别或措辞判断）
+#   fields           meta_missing / meta_or_regex 类型检查的元数据字段
+#   target_category  text_regex / text_absent 限定作用的条款类别
+#   if_present       text_absent 的纳入条件（片段需含该措辞才检查，类别粒度不足时使用）
+#   required_category clause_missing 的缺失判据：该条款类别整体不存在才报警
+#   required_categories clause_missing 的多类别判据（命中任一缺失即报一条汇总发现）
+#   required_pattern clause_missing / text_absent 的"必备要件"正则
+#   pattern          text_regex / meta_or_regex 的命中正则
+#   reason           风险成因说明
+#   legal_basis      合规/法律依据
+#   recommend_key    关联 clause_library.yaml 中的示范条款键（可选）
+#
+# 注意：本规则库仅在文档通过「合同闸门」（services/contract_guard.py）判定为合同后执行，
+#       非合同文本不会进入本层审查，避免出现与合同无关的假阳性风险。
+
+rules:
+  - id: RULE-ENT-001
+    name: 签约主体缺失或经营异常
+    level: high
+    category: 主体资质
+    scope: ["全部类型"]
+    match_mode: 主体资质核验
+    enabled: true
+    type: meta_or_regex
+    fields: [party_a, party_b, credit_code]
+    pattern: 经营异常|列入经营异常名录|严重违法失信|失信被执行人|吊销营业执照
+    reason: 未能完整抽取到甲乙双方主体名称或统一社会信用代码，或正文出现相对方经营异常、失信等表述，主体资质无法自动核验，存在签约主体不适格风险。
+    legal_basis: 《民法典》第143条：民事法律行为有效条件之一为行为人具有相应的民事行为能力，签约主体须明确可核验。
+    recommend_key: meta_complete
+
+  - id: RULE-PAY-002
+    name: 付款缺少验收前置条件
+    level: high
+    category: 付款条件
+    scope: ["全部类型"]
+    match_mode: 关键字段匹配
+    enabled: true
+    type: text_absent
+    target_category: 付款进度
+    required_pattern: 验收|合格|确认无误|验收通过|交付验收|经甲方确认
+    reason: 付款条款存在，但未将"验收合格"设为付款前置条件，存在未验收即付款的资金风险。
+    legal_basis: 商务合同通常约定"验收合格后支付"，以保障付款进度与交付质量挂钩。
+    recommend_key: payment_after_acceptance
+
+  - id: RULE-IP-003
+    name: 知识产权归属不利于我方
+    level: high
+    category: 知识产权
+    scope: ["全部类型"]
+    match_mode: 关键字段匹配
+    enabled: true
+    type: text_regex
+    pattern: (知识产权|著作权|专利权|源代码)[^。；\n]{0,40}?(归|归属|属于)[^。；\n]{0,12}?(乙方|供方|供应商|相对方|对方)(所有|享有|独占)?
+    reason: 约定知识产权整体归属相对方（如软件采购中源代码与算法归供应商），我方仅获使用许可，存在后续二次开发、迁移与维权受限风险。
+    legal_basis: 《民法典》第843条、第859条：技术合同应明确技术成果的归属与使用方式，权属约定直接决定后续处置权。
+    recommend_key: ip_retained
+
+  - id: RULE-LIA-004
+    name: 权责严重不对等（单方无限责任）
+    level: high
+    category: 违约责任
+    scope: ["全部类型"]
+    match_mode: 关键字段匹配
+    enabled: true
+    type: text_regex
+    target_category: 违约责任
+    pattern: 无限(责任|赔偿)|单方承担|全部由.{0,10}承担|由.{0,6}?独自承担|由.{0,6}?自行承担
+    reason: 违约责任条款中存在单方/无限责任约定，权责严重不对等，我方风险敞口过大。
+    legal_basis: 《民法典》第496/497条：格式条款显失公平的，当事人可请求法院或仲裁机构予以撤销。
+    recommend_key: liability_balanced
+
+  - id: RULE-JUR-005
+    name: 争议管辖约定不符合预设规则
+    level: high
+    category: 争议管辖
+    scope: ["全部类型"]
+    match_mode: 管辖约定判定
+    enabled: true
+    type: text_regex
+    target_category: 争议解决管辖
+    pattern: 原告(住所地|所在地)|守约方所在地|我方所在地
+    reason: 争议管辖约定为与争议无法定实际联系的地点（原告/守约方/我方所在地），存在被认定无效的风险。
+    legal_basis: 《民事诉讼法》第35条：协议管辖须在与争议有实际联系的地点的人民法院中约定。
+    recommend_key: jurisdiction_standard
+
+  - id: RULE-CONF-006
+    name: 保密义务缺少期限
+    level: medium
+    category: 保密义务
+    scope: ["全部类型"]
+    match_mode: 条款内容缺失要素
+    enabled: true
+    type: text_absent
+    target_category: 保密义务
+    required_pattern: 保密期限|保密期|永久保密|(\d+)\s*(年|个月|月)|终止后.{0,8}(年|个月)|验收后
+    reason: 存在保密义务约定，但未见明确保密期限，义务边界不清（既可能无限期束缚，也可能过早失效）。
+    legal_basis: 保密条款应约定合理期限（如合同终止后2-3年），避免义务边界不清引发争议。
+    recommend_key: confidentiality_term
+
+  - id: RULE-CONF-007
+    name: 缺少保密条款
+    level: medium
+    category: 保密义务
+    scope: ["全部类型"]
+    match_mode: 必备条款缺失
+    enabled: true
+    type: clause_missing
+    required_category: 保密义务
+    reason: 全文未检出任何保密义务约定，双方商业秘密与合作信息缺乏约束，存在信息泄露与竞业风险。
+    legal_basis: 《民法典》第501条：当事人在订立合同过程中知悉的商业秘密，不得泄露或不正当使用。
+    recommend_key: confidentiality_term
+
+  - id: RULE-FM-008
+    name: 不可抗力通知时效未明确
+    level: medium
+    category: 不可抗力
+    scope: ["全部类型"]
+    match_mode: 条款内容缺失要素
+    enabled: true
+    type: text_absent
+    if_present: 不可抗力
+    required_pattern: (\d+)\s*(天|日|小时)内|及时通知|立即通知|书面通知
+    reason: 合同提及不可抗力，但未约定通知时限与举证要求，履行抗辩易生争议。
+    legal_basis: 《民法典》第590条：因不可抗力不能履行应及时通知对方，并在合理期限内提供证明。
+    recommend_key: force_majeure_notice
+
+  - id: RULE-PEN-009
+    name: 违约金比例超出合理范围
+    level: medium
+    category: 违约责任
+    scope: ["全部类型"]
+    match_mode: 数值阈值
+    enabled: true
+    type: text_regex
+    target_category: 违约责任
+    pattern: 违约金.{0,12}?(3[1-9]|[4-9]\d|[1-9]\d{2,})\s*%
+    reason: 违约金比例约定过高（超过 30%），超出司法实践通常支持的合理区间。
+    legal_basis: 《民法典》第585条：约定的违约金过分高于造成的损失的，人民法院可适当减少。
+    recommend_key: penalty_capped
+
+  - id: RULE-DS-010
+    name: 服务类合同缺少数据安全条款
+    level: low
+    category: 数据安全
+    scope: ["服务"]
+    match_mode: 必备条款缺失
+    enabled: true
+    type: clause_missing
+    required_category: 数据安全
+    reason: 服务类合同通常涉及我方数据交付与处理，全文未约定数据安全与保密技术措施，存在数据泄露与合规风险。
+    legal_basis: 《数据安全法》第27条、《个人信息保护法》第51条：数据处理者应采取必要的安全技术措施。
+    recommend_key: ""
+
+  - id: RULE-LAB-011
+    name: 劳动合同未约定试用期
+    level: low
+    category: 劳动用工
+    scope: ["劳动"]
+    match_mode: 条款内容缺失要素
+    enabled: true
+    type: clause_missing
+    required_pattern: 试用期
+    reason: 劳动合同未约定试用期，无法在考察期内评估岗位适配度，解除成本与用工风险上升。
+    legal_basis: 《劳动合同法》第19条：劳动合同期限三个月以上不满一年的，试用期不得超过一个月；试用期属可约定条款。
+    recommend_key: ""
+
+  - id: RULE-LAB-012
+    name: 劳动报酬支付时间未明确
+    level: medium
+    category: 劳动用工
+    scope: ["劳动"]
+    match_mode: 条款内容缺失要素
+    enabled: true
+    type: text_absent
+    if_present: 劳动报酬|工资|薪酬
+    required_pattern: (每月|次月|当月)[^。；\n]{0,10}(日|前|支付|发放)|(\d+)\s*日[^。；\n]{0,6}(支付|发放)
+    reason: 合同提及劳动报酬但未明确支付周期与支付日，易引发欠薪争议与劳动争议仲裁。
+    legal_basis: 《劳动合同法》第17条：劳动报酬为劳动合同必备条款，应明确支付标准与支付方式。
+    recommend_key: ""
+
+  - id: RULE-MISS-013
+    name: 必备条款缺失
+    level: medium
+    category: 条款完整性
+    scope: ["全部类型"]
+    match_mode: 必备条款缺失
+    enabled: true
+    type: clause_missing
+    required_categories: [标的物, 付款进度, 违约责任]
+    reason: 合同缺少标的物、价款付款或违约责任等核心必备条款，权利义务边界不完整，履行与追责均缺乏依据。
+    legal_basis: 《民法典》第470条：合同内容一般包括标的、数量、价款或报酬、履行期限、违约责任、解决争议的方法等条款。
+    recommend_key: ""

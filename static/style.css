@@ -1,0 +1,1230 @@
+/* 合同审批审查系统 - 商务专业风样式 */
+:root {
+  --bg: #eef1f6;
+  --card: #ffffff;
+  --line: #e3e7ee;
+  --text: #1f2733;
+  --muted: #6b7480;
+  --primary: #1a3a6e;        /* 深蓝主色 */
+  --primary-2: #2b5284;      /* 深蓝渐变副色 */
+  --primary-soft: #eef2f8;   /* 主色浅底 */
+  --accent: #c79a3a;         /* 金棕点缀 */
+  --high: #c0392b;
+  --high-bg: #fbecea;
+  --medium: #b9770e;
+  --medium-bg: #fbf3e3;
+  --low: #1f8a5b;
+  --low-bg: #e9f5ef;
+  /* 合规规则与模板页专用色板（Element 风格）：与顶层深蓝+金的主视觉刻意区分，
+     因为该页是"配置台"而非"审批台"，需要更中性的表单视觉。变量放全局是为了
+     让规则页之外的「新增示范条款」弹窗也能复用同一套取值。 */
+  --el-blue: #409eff;
+  --el-blue-bg: #ecf5ff;
+  --el-blue-line: #b3d8ff;
+  --el-text: #303133;
+  --el-text-2: #606266;
+  --el-text-3: #909399;
+  --el-text-4: #c0c4cc;
+  --el-line: #ebeef5;
+  --el-line-2: #dcdfe6;
+  --el-head: #f5f7fa;
+  --el-high: #e5352b;
+  --el-high-bg: #fef0ef;
+  --el-med: #e08b00;
+  --el-med-bg: #fdf6ec;
+  --el-low: #1f9d66;
+  --el-low-bg: #eef8f3;
+  --radius: 10px;
+  /* 精致化：卡片阴影从单层改为更柔的多层浮起，卡片像"轻浮"在台面上而非扁平贴附 */
+  --shadow: 0 1px 2px rgba(26,42,74,.05), 0 4px 14px rgba(26,42,74,.07), 0 10px 30px rgba(26,42,74,.05);
+  --shadow-sm: 0 1px 2px rgba(26,42,74,.05);
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+  /* 精致化：把纯平浅灰底换成极克制的竖向渐变，增加纵深而不喧宾夺主；
+     顶部最浅、向下微微收沉，让白色卡片像"浮"在台面上。 */
+  background: linear-gradient(180deg, #f7f9fc 0%, #eef1f6 320px, #e9edf3 100%);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  /* 中文排版：禁止在汉字之间随意断行。
+     缺省情况下 CJK 可以在任意字之间换行，容器一窄就会把「审查大盘」压成四行竖排单字——
+     这是手机上最常见的"文字被压"现象。keep-all 让中文只在标点/空格处断，
+     再用 overflow-wrap 兜住超长英文串与 URL，避免反向撑破容器。
+     另外显式声明浅色配色，避免部分手机浏览器的"强制深色"把这套商务风反转成黑底。 */
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  color-scheme: light;
+}
+
+/* ---------------- 侧边企业导航 ---------------- */
+/* 布局改版：顶栏 → 左侧固定侧栏（用户要求）。深蓝纵贯全高 + 右沿金色压线，
+   与登录卡/弹窗的金色语言一致；导航竖排后，"当前页"标记由金下划线改为金左条。 */
+.sidebar {
+  position: fixed; left: 0; top: 0; bottom: 0; z-index: 100;
+  width: 224px; padding: 20px 14px 16px;
+  display: flex; flex-direction: column; gap: 18px;
+  background: linear-gradient(180deg, var(--primary) 0%, #142a4f 100%);
+  color: #fff;
+  /* 右沿金色压线：与登录卡/弹窗压线同一套金色语言，纵贯全高 */
+  border-right: 3px solid var(--accent);
+  box-shadow: 2px 0 14px rgba(26, 42, 74, .16);
+  overflow-y: auto;
+}
+.brand {
+  display: flex; align-items: center; gap: 10px;
+  font-weight: 700; font-size: 15.5px; letter-spacing: .5px; line-height: 1.45;
+  padding: 0 6px;
+}
+.brand .logo {
+  width: 30px; height: 30px; border-radius: 8px; flex: none;
+  /* 金调替代纯白底：与登录页徽记的金环统一视觉语言 */
+  background: rgba(199,154,58,.18);
+  border: 1px solid rgba(199,154,58,.55);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 16px;
+}
+/* 导航竖排：一项一行、占满栏宽，移动端折回横排 */
+.nav { display: flex; flex-direction: column; gap: 4px; }
+.nav a {
+  position: relative; display: block;
+  color: rgba(255, 255, 255, .78); text-decoration: none;
+  font-size: 14px; padding: 11px 14px; border-radius: 8px;
+  transition: background .15s, color .15s;
+}
+.nav a:hover { color: #fff; background: rgba(255, 255, 255, .10); }
+.nav a.active { color: #fff; background: rgba(255, 255, 255, .16); font-weight: 600; }
+/* 激活态金色左条：竖排导航的"当前所在页"标记（原顶栏是金下划线） */
+.nav a.active::before {
+  content: ""; position: absolute; left: 0; top: 9px; bottom: 9px;
+  width: 3px; border-radius: 0 3px 3px 0; background: var(--accent);
+}
+
+/* 内容区让开侧栏宽度；max-width 保留原有 1320 的阅读测宽 */
+main { margin: 0 auto 0 224px; padding: 24px 30px 44px; max-width: 1320px; }
+.view.hidden { display: none; }
+
+/* ---------------- 通用卡片 ---------------- */
+.card {
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: var(--radius); padding: 18px; margin-bottom: 18px;
+  box-shadow: var(--shadow);
+}
+.card h3 {
+  margin: 0 0 14px; font-size: 15px; font-weight: 600;
+  /* 精致化：卡片标题左条由深蓝收为金，与顶栏/弹窗/导出页标题骨架统一为金语言 */
+  padding-left: 11px; border-left: 3px solid var(--accent);
+}
+
+/* ---------------- 工具栏 ---------------- */
+/* 布局调整：筛选条收进一张白卡，与规则页筛选条、卡片同款表面，
+   主操作（页头）与筛选（本行）分层清晰，不再让下拉孤零零浮在页面上 */
+.toolbar {
+  display: flex; gap: 12px; margin-bottom: 16px; align-items: center; flex-wrap: wrap;
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: var(--radius); padding: 12px 14px; box-shadow: var(--shadow);
+}
+
+/* 统计概览卡（大盘顶部） */
+/* 统计卡：4 列网格；间距由 14 微调到 16，留白更从容（与下方卡片节奏一致） */
+.stat-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 18px; }
+/* 统计卡：在白卡基础上加一圈克制金描边，与顶栏/登录卡的金色语言一致；
+   左侧仍保留状态色脊线（蓝/赭/红/绿），金框与色脊互不抢戏。 */
+/* 卡片入场：极轻的淡入上移，仅初次渲染触发（不挂规则网格，避免筛选/搜索时逐键闪烁） */
+@keyframes cardFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+.stat-card { display: flex; align-items: center; gap: 14px; background: var(--card); border: 1px solid rgba(199,154,58,.3); border-left: 4px solid var(--primary); border-radius: var(--radius); padding: 16px 18px; box-shadow: var(--shadow); transition: transform .15s ease, box-shadow .15s ease; animation: cardFadeIn .25s ease-out both; }
+.stat-card:hover { transform: translateY(-2px); box-shadow: 0 6px 22px rgba(26,42,74,.12); }
+.stat-card.amber { border-left-color: var(--medium); }
+.stat-card.red { border-left-color: var(--high); }
+.stat-card.green { border-left-color: var(--low); }
+.stat-ico { flex: 0 0 auto; width: 46px; height: 46px; display: flex; align-items: center; justify-content: center; font-size: 24px; background: var(--primary-soft); border-radius: 12px; }
+.stat-card.amber .stat-ico { background: var(--medium-bg); }
+.stat-card.red .stat-ico { background: var(--high-bg); }
+.stat-card.green .stat-ico { background: var(--low-bg); }
+.stat-meta { min-width: 0; }
+.stat-val { font-size: 26px; font-weight: 700; color: var(--text); line-height: 1.1; font-variant-numeric: tabular-nums; }
+.stat-label { font-size: 13px; color: var(--muted); margin-top: 3px; }
+/* 通用按钮：相对定位 + 裁切，承载金色涟漪 */
+.btn {
+  position: relative; overflow: hidden;
+  border: 1px solid var(--line); background: #fff; color: var(--text);
+  padding: 9px 18px; border-radius: 8px; cursor: pointer; font-size: 14px;
+  font-weight: 500; transition: all .15s; box-shadow: var(--shadow-sm);
+}
+/* 按压反馈：轻微回缩 + 金色涟漪（纯 CSS，不依赖点击坐标，安全不会干扰既有 onclick） */
+.btn:active, .login-btn:active { transform: scale(.97); }
+.btn::after, .login-btn::after {
+  content: ""; position: absolute; left: 50%; top: 50%;
+  width: 10px; height: 10px; border-radius: 50%;
+  background: rgba(199,154,58,.4); opacity: 0; pointer-events: none;
+  transform: translate(-50%, -50%) scale(0);
+}
+.btn:active::after, .login-btn:active::after { animation: btnRipple .45s ease-out; }
+@keyframes btnRipple {
+  0%   { transform: translate(-50%, -50%) scale(0); opacity: .5; }
+  100% { transform: translate(-50%, -50%) scale(16); opacity: 0; }
+}
+.btn:hover { border-color: var(--primary); color: var(--primary); }
+.btn.primary {
+  background: linear-gradient(90deg, var(--primary) 0%, var(--primary-2) 100%);
+  color: #fff; border-color: transparent;
+  box-shadow: 0 2px 8px rgba(26,42,74,.25);
+}
+/* 主按钮悬停：深蓝上叠一层金色辉光 + 轻微上浮，强化「可点」的商务质感 */
+.btn.primary:hover { opacity: .96; color: #fff; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(199,154,58,.35); }
+.select, .note {
+  border: 1px solid var(--line); border-radius: 8px; padding: 9px 12px;
+  font-size: 14px; background: #fff; color: var(--text);
+}
+.select:focus, .note:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
+
+/* ---------------- 表格 ---------------- */
+.table-card { padding: 0; overflow: hidden; }
+.task-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.task-table th, .task-table td {
+  padding: 13px 16px; text-align: left; border-bottom: 1px solid var(--line);
+}
+.task-table th {
+  background: #f4f6fa; color: var(--muted); font-weight: 600; font-size: 13px;
+  letter-spacing: .3px;
+  /* 精致化：表头下沿压一条克制的金线，与行 hover 金边、全站金标题骨架呼应 */
+  border-bottom: 2px solid rgba(199,154,58,.3);
+}
+.task-table tbody tr { transition: background .12s; }
+/* 表格行 hover：保留浅底，并在首列内侧压一条金边（tr 直接画 box-shadow 部分浏览器不渲染，
+   故落在首个 td 上，可靠且不影响布局） */
+.task-table tbody tr:hover { background: #f7f9fc; }
+.task-table tbody tr:hover td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
+.task-table tbody tr:last-child td { border-bottom: none; }
+.empty { padding: 36px; text-align: center; color: var(--muted); font-size: 14px; }
+
+/* ---------------- 状态/风险标签 ---------------- */
+.tag {
+  display: inline-block; padding: 2px 11px; border-radius: 20px;
+  font-size: 12px; font-weight: 600; white-space: nowrap;
+}
+.tag.completed { background: var(--low-bg); color: var(--low); }
+.tag.blocked { background: var(--high-bg); color: var(--high); }
+.tag.rejected { background: #fff1e3; color: #b5631b; }
+.tag.checking { background: #eef0f4; color: #5a6472; }
+.tag.pending, .tag.parsing, .tag.reviewing { background: #eef0f4; color: #5a6472; }
+.lv-high { background: var(--high-bg); color: var(--high); }
+.lv-medium { background: var(--medium-bg); color: var(--medium); }
+.lv-low { background: var(--low-bg); color: var(--low); }
+.link { color: var(--primary); cursor: pointer; font-weight: 500; }
+.link:hover { text-decoration: underline; }
+
+/* ---------------- 双栏工作台 ---------------- */
+.workbench { display: flex; gap: 18px; align-items: flex-start; }
+.pane {
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow);
+}
+.left-pane { flex: 1.15; min-height: 60vh; }
+.right-pane { flex: 1; min-height: 60vh; max-height: 82vh; overflow-y: auto; }
+.pane-title {
+  font-weight: 600; font-size: 13.5px; margin-bottom: 12px; color: var(--text);
+  padding-bottom: 9px; border-bottom: 1px solid var(--line);
+  display: flex; align-items: center; gap: 7px;
+}
+.pane-title::before {
+  content: ""; width: 4px; height: 13px; border-radius: 2px;
+  /* 精致化：工作台面板标题左条由深蓝渐变收为金渐变（底部略深增强立体感），
+     与卡片标题金左条、导出页金标题骨架统一 */
+  background: linear-gradient(180deg, var(--accent), #a87f25);
+}
+.contract-view {
+  white-space: pre-wrap; line-height: 1.95; font-size: 14px; max-height: 74vh;
+  overflow-y: auto; border: 1px solid var(--line); border-radius: 8px;
+  padding: 16px; background: #fcfcfd;
+}
+mark.risk-high { background: var(--high-bg); color: var(--high); padding: 0 2px; border-radius: 3px; cursor: pointer; box-shadow: inset 0 -2px 0 rgba(192,57,43,.35); }
+mark.risk-medium { background: var(--medium-bg); color: var(--medium); padding: 0 2px; border-radius: 3px; cursor: pointer; box-shadow: inset 0 -2px 0 rgba(185,119,14,.35); }
+mark.risk-low { background: var(--low-bg); color: var(--low); padding: 0 2px; border-radius: 3px; cursor: pointer; box-shadow: inset 0 -2px 0 rgba(31,138,91,.35); }
+mark.flash { outline: 2px solid var(--primary); }
+mark:hover { filter: brightness(.97); }
+
+.risk-summary {
+  background: var(--primary-soft); border: 1px solid #d9e2f0; border-radius: 8px;
+  padding: 12px 14px; font-size: 13px; margin-bottom: 14px; color: #34425c;
+}
+/* 布局优化：风险卡间距 11→13，与规则网格节奏统一，右栏更透气 */
+.risk-cards { display: flex; flex-direction: column; gap: 13px; }
+.rcard {
+  border: 1px solid var(--line); border-left-width: 4px; border-radius: 8px;
+  /* 布局优化：内边距 11/13 → 12/14，单卡内容更舒展 */
+  padding: 12px 14px; cursor: pointer; background: #fff;
+  transition: box-shadow .15s, transform .1s; box-shadow: var(--shadow-sm);
+  animation: cardFadeIn .22s ease-out both;
+}
+/* hover 顶边亮金：与规则卡片同一套处理（inset 金线不挤布局），金顶 + 左侧风险色脊呼应 */
+.rcard:hover { box-shadow: inset 0 2px 0 var(--accent), var(--shadow); }
+.rcard.high { border-left-color: var(--high); }
+.rcard.medium { border-left-color: var(--medium); }
+.rcard.low { border-left-color: var(--low); }
+.rcard.active { box-shadow: 0 0 0 2px rgba(26,58,110,.25); }
+.rcard .rc-head { display: flex; justify-content: space-between; align-items: center; font-weight: 600; font-size: 13px; margin-bottom: 5px; gap: 8px; }
+/* pre-line：拍照识别来源的告警末尾会附一段"识别来源提示"，靠空行分段，需保留换行 */
+.rcard .rc-reason { font-size: 12.5px; color: #4a525c; white-space: pre-line; }
+.rcard .rc-law { font-size: 12px; color: var(--muted); margin-top: 5px; }
+/* 建议区染金：把蓝调描边/底改克制金，与全站金色语言统一（原来是蓝灰描边） */
+.rcard .rc-rec {
+  font-size: 12.5px; margin-top: 7px; background: rgba(199,154,58,.06);
+  border-radius: 6px; padding: 7px 9px; white-space: pre-wrap; color: #34425c;
+  border: 1px solid rgba(199,154,58,.3);
+}
+.rcard .rc-copy { float: right; font-size: 12px; color: var(--primary); cursor: pointer; font-weight: 600; }
+.rcard .rc-copy:hover { text-decoration: underline; }
+
+.note { width: 100%; min-height: 64px; resize: vertical; margin-top: 10px; }
+.wb-actions { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+.wb-status { font-size: 13px; margin-top: 10px; color: var(--low); font-weight: 500; }
+.wb-back { margin-bottom: 12px; font-size: 13px; }
+.wb-back a { color: var(--primary); text-decoration: none; font-weight: 500; }
+.wb-back a:hover { text-decoration: underline; }
+
+/* ---------------- 合规规则与模板页（规则台账版式） ---------------- */
+/* 版式：顶部筛选条 + 卡片网格。
+   与"左分面 + 右表格"的通用后台版式拉开区分 —— 规则是"一条一款"的独立审查对象，
+   用卡片承载才能把 编号 / 风险等级 / 启用开关 / 元信息 分出层次；
+   而横向铺开的筛选条把省下的 200px 侧栏宽度还给了规则本身。 */
+/* 局部换掉 Element 标准色板：亮蓝 #409eff 加那套高饱和风险色，是"通用组件库"最强的视觉指纹。
+   这里改用与顶栏一致的深蓝，风险三色换成与「审查大盘」同一组色值。
+   只声明在 #rules 作用域内 —— 拍照弹窗等模块仍在用同一批变量名，不受影响。 */
+#rules {
+  --el-blue: #1a3a6e;
+  --el-blue-bg: #eef2f8;
+  --el-blue-line: #c3d0e2;
+  --el-high: #c0392b;  --el-high-bg: #fbecea;
+  --el-med: #b9770e;   --el-med-bg: #fbf3e3;
+  --el-low: #1f8a5b;   --el-low-bg: #e9f5ef;
+}
+
+.rl-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 18px; margin-bottom: 15px; }
+.rl-head-text { min-width: 0; }
+.rl-title { margin: 0 0 7px; font-size: 19px; font-weight: 600; color: var(--el-text); letter-spacing: .2px; }
+.rl-sub { margin: 0; font-size: 12.5px; color: var(--el-text-3); line-height: 1.7; max-width: 780px; }
+.rl-head-btns { display: flex; gap: 10px; flex-shrink: 0; }
+.rl-ghost-btn {
+  background: #fff; color: var(--el-text-2);
+  border: 1px solid var(--el-line-2); border-radius: 4px;
+  padding: 8px 15px; font-size: 13px;
+}
+.rl-ghost-btn:hover { color: var(--el-blue); border-color: var(--el-blue-line); background: var(--el-blue-bg); }
+
+/* 三个标签页 */
+.rl-tabs { display: flex; gap: 26px; border-bottom: 1px solid var(--el-line); margin-bottom: 15px; padding: 0 4px; }
+.rl-tab {
+  position: relative; background: none; border: none; cursor: pointer;
+  padding: 0 2px 11px; font-family: inherit; font-size: 14px;
+  color: var(--el-text-2); display: flex; align-items: center;
+}
+.rl-tab:hover { color: var(--el-blue); }
+.rl-tab.active { color: var(--el-blue); font-weight: 600; }
+.rl-tab.active::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: -1px;
+  height: 2px; border-radius: 2px; background: var(--el-blue);
+}
+.rl-tab-n {
+  display: inline-block; margin-left: 5px; padding: 0 6px;
+  font-size: 11px; line-height: 17px; border-radius: 9px;
+  background: #f0f2f5; color: var(--el-text-3); font-weight: 500;
+}
+.rl-tab.active .rl-tab-n { background: var(--el-blue-bg); color: var(--el-blue); }
+
+/* ---- 顶部筛选工具条 ---- */
+/* 不做 sticky 吸顶：顶栏已占 58px，筛选条自身约 110px，再吸顶就把大半屏压没了；
+   而本页最多 13 张卡片，滚动范围有限，"改条件要回顶部"的代价远小于常驻占位。 */
+.rl-filterbar {
+  background: #fff; border: 1px solid var(--el-line); border-radius: 10px;
+  padding: 12px 14px; margin-bottom: 14px;
+  box-shadow: 0 1px 3px rgba(20, 40, 80, .05);
+}
+.rl-fb-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 9px; }
+
+/* 搜索框（带前置图标） */
+.rl-search-wrap { position: relative; flex: 0 0 252px; min-width: 180px; }
+.rl-search-icon {
+  position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+  font-size: 11px; opacity: .5; pointer-events: none;
+}
+.rl-search {
+  width: 100%; height: 32px; padding: 0 10px 0 30px; box-sizing: border-box;
+  border: 1px solid var(--el-line-2); border-radius: 6px;
+  font-family: inherit; font-size: 12.5px; color: var(--el-text);
+  background: #fbfcfe; outline: none;
+}
+.rl-search:focus { border-color: var(--el-blue); background: #fff; box-shadow: 0 0 0 3px var(--el-blue-bg); }
+.rl-search::placeholder { color: var(--el-text-4); }
+
+/* 风险分级速筛胶囊：把"有几条高风险"这类最常问的问题变成一次点击 */
+.rl-lv-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.rl-lv-chips.hidden { display: none; }
+.rl-lv-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 5px 10px; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--el-line-2); background: #fff;
+  font-family: inherit; font-size: 12px; color: var(--el-text-2);
+}
+.rl-lv-chip:hover { border-color: #c6cbd4; }
+.rl-lv-dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+.rl-lv-chip.high .rl-lv-dot { background: var(--el-high); }
+.rl-lv-chip.medium .rl-lv-dot { background: var(--el-med); }
+.rl-lv-chip.low .rl-lv-dot { background: var(--el-low); }
+/* 选中用实心色块：浅色背景上的浅底描边几乎看不出选中，实心块才一眼可辨 */
+.rl-lv-chip.high.active { background: var(--el-high); border-color: var(--el-high); color: #fff; }
+.rl-lv-chip.medium.active { background: var(--el-med); border-color: var(--el-med); color: #fff; }
+.rl-lv-chip.low.active { background: var(--el-low); border-color: var(--el-low); color: #fff; }
+.rl-lv-chip.active .rl-lv-dot { background: #fff; }
+.rl-lv-chip.active .rl-fchip-n { background: rgba(255, 255, 255, .3); color: #fff; }
+
+/* 结果统计 + 清空 */
+.rl-fb-stat { margin-left: auto; font-size: 12.5px; color: var(--el-text-3); white-space: nowrap; }
+.rl-fb-stat b { color: var(--el-text); font-size: 14px; }
+.rl-clear-btn {
+  padding: 5px 11px; border-radius: 999px; cursor: pointer; white-space: nowrap;
+  border: 1px solid var(--el-line-2); background: #fff;
+  font-family: inherit; font-size: 12px; color: var(--el-text-2);
+}
+.rl-clear-btn:hover { color: var(--el-high); border-color: var(--el-high); background: var(--el-high-bg); }
+.rl-clear-btn.hidden { display: none; }
+
+/* 两行筛选 chips */
+.rl-fb-row { display: flex; gap: 10px; padding: 7px 0; border-top: 1px dashed var(--el-line); align-items: flex-start; }
+.rl-fb-label {
+  flex: 0 0 74px; padding-top: 5px;
+  font-size: 12px; color: var(--el-text-3); letter-spacing: .3px;
+}
+.rl-chips { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; flex: 1; }
+.rl-fchip {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 10px; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--el-line-2); background: #fff;
+  font-family: inherit; font-size: 12px; color: var(--el-text-2);
+}
+.rl-fchip:hover { border-color: var(--el-blue); color: var(--el-blue); }
+/* 激活态取深靛蓝而非 Element 蓝：横向 chips 里蓝底白字太像默认组件库模样 */
+.rl-fchip.active { background: #2b3a55; border-color: #2b3a55; color: #fff; font-weight: 500; }
+.rl-fchip-n {
+  padding: 0 5px; border-radius: 999px; font-size: 11px; line-height: 16px;
+  background: var(--el-head); color: var(--el-text-3);
+}
+.rl-fchip.active .rl-fchip-n { background: rgba(255, 255, 255, .22); color: #fff; }
+.rl-fdot { width: 6px; height: 6px; border-radius: 50%; flex: none; }
+.rl-fdot.high { background: var(--el-high); }
+.rl-fdot.medium { background: var(--el-med); }
+
+/* ---- 主区：卡片网格 ---- */
+.rl-grid {
+  /* 布局优化：网格间距 12→16，与仪表盘统计卡节奏一致，卡片墙更透气 */
+  display: grid; gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  align-items: start;
+}
+.rl-rc {
+  position: relative; background: #fff; cursor: pointer;
+  border: 1px solid var(--el-line); border-radius: 10px;
+  /* 布局优化：内边距 13/15/12/17 → 14/16/13/18，卡片内部更从容不局促 */
+  padding: 14px 16px 13px 18px;
+  /* 左侧风险色条：一屏扫过去先看到等级分布，而不必逐行读"风险分级"列 */
+  border-left: 4px solid var(--el-line-2);
+  transition: box-shadow .15s, transform .15s;
+}
+/* hover 时顶边亮金：用 inset 阴影画一条 2px 金线，不挤占布局、不抖动；
+   与卡片左侧风险色脊形成「金顶 + 彩脊」的精致呼应。 */
+.rl-rc:hover { box-shadow: inset 0 2px 0 var(--accent), 0 5px 16px rgba(20, 40, 80, .12); transform: translateY(-1px); }
+.rl-rc.open { box-shadow: 0 4px 16px rgba(20, 40, 80, .1); }
+.rl-rc.lv-high { border-left-color: var(--el-high); }
+.rl-rc.lv-medium { border-left-color: var(--el-med); }
+.rl-rc.lv-low { border-left-color: var(--el-low); }
+.rl-rc.lv-neutral { border-left-color: var(--el-blue-line); }
+
+/* 卡片头：编号 + 风险等级 + 启用开关（开关贴右，与"操作"列语义一致） */
+.rl-rc-head { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
+.rl-rc-id { flex: none; }
+.rl-rc-head .rl-switch { margin-left: auto; }
+.rl-rc-head .rl-link { flex: none; font-size: 12px; }
+.rl-rc-name { margin: 0 0 8px; font-size: 14.5px; font-weight: 600; line-height: 1.5; color: var(--el-text); }
+/* 条款摘要：两行封顶，展开后看全文 */
+.rl-rc-quote {
+  margin: 0 0 9px; font-size: 12.5px; line-height: 1.7; color: var(--el-text-3);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.rl-rc-meta { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; font-size: 12px; color: var(--el-text-3); }
+.rl-rc-kv { display: inline-flex; align-items: center; gap: 4px; min-width: 0; }
+.rl-rc-kv em { font-style: normal; color: #a3aab6; flex: none; }
+.rl-rc-foot {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  margin-top: 10px; padding-top: 9px; border-top: 1px solid var(--el-line);
+}
+.rl-rc-toggle { font-size: 12px; color: var(--el-blue); }
+.rl-rc-op { font-size: 11.5px; color: var(--el-text-4); }
+
+/* 卡片内的展开详情 */
+.rl-rc-detail { margin-top: 10px; padding: 11px 13px; border-radius: 7px; background: var(--el-head); }
+
+/* 通用小件（卡片与筛选条共用） */
+.rl-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11.5px; color: var(--el-text-3); letter-spacing: -.2px;
+}
+.rl-chip {
+  display: inline-block; padding: 0 8px; border-radius: 999px; white-space: nowrap;
+  font-size: 11.5px; line-height: 19px;
+  color: var(--el-blue); background: var(--el-blue-bg); border: 1px solid var(--el-blue-line);
+}
+.rl-soft { color: var(--el-text-3); }
+.rl-faint { color: var(--el-text-4); }
+.rl-on { color: var(--el-low); }
+.rl-ellipsis { max-width: 330px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rl-pill { display: inline-block; padding: 0 8px; border-radius: 999px; font-size: 11.5px; line-height: 19px; white-space: nowrap; }
+.rl-pill.high { color: var(--el-high); background: var(--el-high-bg); }
+.rl-pill.medium { color: var(--el-med); background: var(--el-med-bg); }
+.rl-pill.low { color: var(--el-low); background: var(--el-low-bg); }
+.rl-link { color: var(--el-blue); cursor: pointer; }
+.rl-link:hover { text-decoration: underline; }
+
+/* 启用开关 */
+.rl-switch { position: relative; display: inline-block; width: 34px; height: 18px; vertical-align: middle; cursor: pointer; }
+.rl-switch input { position: absolute; opacity: 0; width: 0; height: 0; }
+.rl-slider { position: absolute; inset: 0; background: var(--el-line-2); border-radius: 10px; transition: background .2s; }
+.rl-slider::before {
+  content: ""; position: absolute; left: 2px; top: 2px; width: 14px; height: 14px;
+  background: #fff; border-radius: 50%; box-shadow: 0 1px 2px rgba(0, 0, 0, .2);
+  transition: transform .2s;
+}
+/* 开关开启态改为金调：规则卡片的启用开关与全站金色语言统一（原来是深蓝） */
+.rl-switch input:checked + .rl-slider { background: var(--accent); }
+.rl-switch input:checked + .rl-slider::before { transform: translateX(16px); }
+
+/* 展开详情内容（外层容器样式见 .rl-rc-detail） */
+.rl-detail-row { display: flex; gap: 10px; font-size: 12.5px; line-height: 1.75; color: var(--el-text-2); margin-bottom: 5px; }
+.rl-detail-row:last-child { margin-bottom: 0; }
+.rl-detail-k { flex-shrink: 0; width: 62px; color: var(--el-text-3); }
+.rl-pre { margin: 0; font-family: inherit; white-space: pre-wrap; line-height: 1.8; color: var(--el-text); }
+.rl-empty { padding: 38px 20px; text-align: center; color: var(--el-text-3); font-size: 13px; line-height: 1.85; }
+/* 首屏未渲染前保持隐藏，避免"没有符合条件的记录"一闪而过 */
+.rl-empty.hidden { display: none; }
+
+/* 操作反馈提示 */
+.rl-hint.ok { color: var(--el-low); }
+.rl-hint.warn { color: var(--el-med); }
+.rl-hint.err { color: var(--el-high); }
+
+/* 新增示范条款弹窗（加宽 + 表单控件） */
+.modal-wide { max-width: 560px; }
+.modal-input, .modal-textarea {
+  width: 100%; margin-bottom: 14px; padding: 0 10px; height: 34px;
+  border: 1px solid var(--el-line-2); border-radius: 4px;
+  font-family: inherit; font-size: 13px; color: var(--el-text);
+  background: #fff; outline: none; box-sizing: border-box;
+}
+.modal-input:focus, .modal-textarea:focus { border-color: var(--el-blue); }
+.modal-textarea { height: 132px; min-height: 132px; padding: 9px 10px; line-height: 1.7; resize: vertical; }
+.modal-input::placeholder, .modal-textarea::placeholder { color: var(--el-text-4); }
+
+@media (max-width: 900px) {
+  .workbench { flex-direction: column; }
+  .stat-cards { grid-template-columns: repeat(2, 1fr); }
+  .rl-head { flex-direction: column; align-items: stretch; }
+  /* 窄屏：卡片单列；筛选条改成竖排，chips 允许换行 */
+  .rl-grid { grid-template-columns: 1fr; }
+  .rl-search-wrap { flex: 1 1 100%; }
+  .rl-fb-stat { margin-left: 0; }
+  .rl-fb-row { flex-direction: column; gap: 6px; }
+  .rl-fb-label { flex: none; padding-top: 0; }
+}
+
+/* ============ 失败外发审核页 ============ */
+/* 与规则页用同一套商务色（深靛蓝 + 深红/赭黄/墨绿），避免站内出现第二种蓝。
+   仍是作用域内覆盖，不动全局变量——拍照弹窗等复用 --el-blue 的地方不受影响。 */
+#export {
+  --el-blue: #1a3a6e;
+  --el-blue-bg: #eef2f8;
+  --el-blue-line: #c3d0e2;
+  --el-high: #c0392b;  --el-high-bg: #fbecea;
+  --el-med: #b9770e;   --el-med-bg: #fbf3e3;
+  --el-low: #1f8a5b;   --el-low-bg: #e9f5ef;
+}
+
+/* 页标题加克制金压线：失败外发审核是三大导航之一，此前零金色与全站割裂。
+   仅点在标题骨架上，不泛滥——inline-block 让金下划线只包住标题文字宽度，
+   与顶栏压线、弹窗压线同一套金色语言（--accent 全局变量，本作用域未重定义）。 */
+#export .rl-title {
+  display: inline-block;
+  padding-bottom: 6px;
+  border-bottom: 2px solid var(--accent);
+}
+
+/* 导出页次级按钮（驳回）hover 收为克制金：与标题金骨架、主按钮金辉呼应。
+   用 :not(.primary) 避开主按钮「确认推送」，不覆盖其金辉上浮效果；
+   仅作用于 #export 作用域，不影响全站其他次级按钮（仍走深蓝 hover）。 */
+#export .btn:not(.primary):hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  box-shadow: 0 2px 8px rgba(199, 154, 58, .18);
+}
+
+/* ---- 条件配置卡 ---- */
+.ex-card {
+  background: #fff; border: 1px solid var(--el-line);
+  border-radius: 10px; margin-bottom: 16px; overflow: hidden;
+}
+.ex-card-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  flex-wrap: wrap; padding: 12px 16px; border-bottom: 1px solid var(--el-line);
+}
+.ex-card-title { display: flex; align-items: center; gap: 7px; font-size: 13.5px; font-weight: 600; color: var(--el-text); }
+/* 卡片标题左条改为金调：外发触发条件卡是全页唯一的配置卡标题，
+   与分区标题金左条、页标题金压线统一为"金标题骨架"，深蓝(--el-blue)退为内容/交互强调色。 */
+.ex-card-title::before { content: ""; width: 3px; height: 13px; border-radius: 2px; background: var(--accent); }
+.ex-labels { display: flex; flex-wrap: wrap; gap: 6px; }
+.ex-label-pill {
+  font-size: 11.5px; padding: 2px 9px; border-radius: 999px;
+  background: var(--el-blue-bg); color: var(--el-blue); border: 1px solid var(--el-blue-line);
+}
+.ex-form {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px 22px; padding: 15px 16px;
+}
+.ex-field { min-width: 0; }
+.ex-label { display: block; margin-bottom: 6px; font-size: 12.5px; font-weight: 600; color: var(--el-text-2); }
+.ex-input {
+  width: 100%; height: 32px; padding: 0 10px;
+  border: 1px solid var(--el-line-2); border-radius: 6px;
+  font-family: inherit; font-size: 12.5px; color: var(--el-text);
+  background: #fff; outline: none;
+}
+.ex-input:focus { border-color: var(--el-blue); }
+.ex-input::placeholder { color: var(--el-text-4); }
+.ex-checks { display: flex; flex-wrap: wrap; gap: 6px 16px; min-height: 32px; align-items: center; }
+.ex-check-line {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12.5px; color: var(--el-text-2); cursor: pointer;
+}
+.ex-check-line input { accent-color: var(--el-blue); cursor: pointer; }
+.ex-tip { margin-top: 5px; font-size: 11.5px; line-height: 1.7; color: var(--el-text-4); }
+.ex-foot {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 12px 16px; border-top: 1px solid var(--el-line); background: #fbfcfe;
+}
+.ex-hint { margin-left: 2px; }
+.ex-hint.ok  { color: var(--el-low); }
+.ex-hint.err { color: var(--el-high); }
+
+/* ---- 分区标题 ---- */
+.ex-sec-title {
+  display: flex; align-items: center; gap: 8px;
+  margin: 20px 0 10px; font-size: 14px; font-weight: 600; color: var(--el-text);
+}
+/* 分区标题（待人工审核/处理记录/审计留痕）前加克制的金左条，
+   与卡片标题金左条、页标题金压线同属"标题骨架"语言，不侵入内容区。 */
+.ex-sec-title::before {
+  content: ""; flex: none;
+  width: 3px; height: 14px; border-radius: 2px;
+  background: var(--accent);
+}
+.ex-sec-n {
+  min-width: 18px; padding: 0 6px; border-radius: 9px;
+  font-size: 11px; line-height: 18px; text-align: center; font-weight: 500;
+  background: var(--el-head); color: var(--el-text-3);
+}
+.ex-chips { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 11px; }
+.ex-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 11px; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--el-line-2); background: #fff;
+  font-family: inherit; font-size: 12px; color: var(--el-text-2);
+}
+.ex-chip:hover { border-color: var(--el-blue-line); color: var(--el-blue); }
+.ex-chip.active { background: #2b3a55; border-color: #2b3a55; color: #fff; }
+.ex-chip em { font-style: normal; opacity: .62; font-size: 11px; }
+.ex-chip.active em { opacity: .85; }
+
+/* ---- 记录列表 ---- */
+.ex-list { display: flex; flex-direction: column; gap: 11px; }
+.ex-empty {
+  padding: 22px; border: 1px dashed var(--el-line-2); border-radius: 8px;
+  background: #fcfdff; text-align: center; font-size: 12.5px; color: var(--el-text-3);
+}
+.ex-item {
+  background: #fff; border: 1px solid var(--el-line); border-left: 4px solid var(--el-line-2);
+  border-radius: 8px; padding: 13px 15px;
+}
+/* 左侧色条即状态：一屏扫过去先看到"哪些还等着人处理" */
+.ex-item.pending     { border-left-color: #c9a227; }
+.ex-item.failed      { border-left-color: var(--el-high); }
+.ex-item.pushed      { border-left-color: var(--el-low); }
+.ex-item.rejected    { border-left-color: #8b8f96; }
+.ex-item.filtered    { border-left-color: #b9bfc8; background: #fcfcfd; }
+.ex-item.superseded  { border-left-color: #cfd4da; background: #fcfcfd; }
+.ex-item-head { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+.ex-kind {
+  flex: none; padding: 1px 8px; border-radius: 4px; font-size: 11.5px;
+  background: var(--el-head); color: var(--el-text-2);
+}
+.ex-item.pending .ex-kind, .ex-item.failed .ex-kind { background: var(--el-med-bg); color: var(--el-med); }
+.ex-item-name { font-size: 13.5px; font-weight: 600; color: var(--el-text); word-break: break-all; }
+.ex-item-meta { font-size: 11.5px; color: var(--el-text-4); }
+.ex-status {
+  margin-left: auto; flex: none; padding: 1px 9px; border-radius: 999px; font-size: 11.5px;
+  background: var(--el-head); color: var(--el-text-2);
+}
+.ex-status.pending     { background: var(--el-med-bg); color: var(--el-med); }
+.ex-status.pushed      { background: var(--el-low-bg); color: var(--el-low); }
+.ex-status.failed      { background: var(--el-high-bg); color: var(--el-high); }
+/* 驳回 / 条件未过 / 已失效统一用中性灰：这三类都表示"不需要再动作"，
+   不该沿用警告色，否则一眼扫过去会误以为还有事没处理 */
+.ex-status.filtered,
+.ex-status.superseded,
+.ex-status.rejected    { background: #f2f3f5; color: var(--el-text-4); }
+.ex-item-reason {
+  margin-top: 8px; font-size: 12.5px; line-height: 1.75; color: var(--el-text-2);
+  word-break: break-all;
+}
+
+/* ---- 条件判定明细 ---- */
+.ex-gate { margin-top: 10px; padding: 9px 11px; border-radius: 7px; background: #fafbfd; border: 1px dashed var(--el-line-2); }
+.ex-gate-sum { font-size: 12px; line-height: 1.7; color: var(--el-text-2); margin-bottom: 7px; }
+.ex-gate-row {
+  display: grid; grid-template-columns: 16px 96px minmax(120px, 1fr) minmax(90px, .8fr);
+  gap: 8px; align-items: baseline;
+  font-size: 11.5px; line-height: 1.95; color: var(--el-text-3);
+}
+.ex-gate-mark { font-family: ui-monospace, Menlo, Consolas, monospace; }
+.ex-gate-row.ok .ex-gate-mark   { color: var(--el-low); }
+.ex-gate-row.bad .ex-gate-mark  { color: var(--el-high); }
+.ex-gate-row.skip .ex-gate-mark { color: var(--el-text-4); }
+.ex-gate-row.bad .ex-gate-label { color: var(--el-high); font-weight: 600; }
+.ex-gate-label { color: var(--el-text-2); }
+.ex-gate-exp, .ex-gate-act { font-family: ui-monospace, Menlo, Consolas, monospace; word-break: break-all; }
+.ex-gate-row.skip { opacity: .62; }
+
+/* ---- 推送结果 / 消息预览 ---- */
+.ex-push { margin-top: 9px; padding: 6px 10px; border-radius: 6px; font-size: 11.5px; line-height: 1.7; }
+.ex-push.ok  { background: var(--el-low-bg); color: var(--el-low); }
+.ex-push.bad { background: var(--el-high-bg); color: var(--el-high); }
+.ex-detail { margin-top: 9px; }
+.ex-detail summary {
+  cursor: pointer; font-size: 12px; color: var(--el-blue);
+  list-style: none; user-select: none;
+}
+.ex-detail summary::-webkit-details-marker { display: none; }
+.ex-detail summary::before { content: "▸ "; font-size: 10px; }
+.ex-detail[open] summary::before { content: "▾ "; }
+.ex-msg {
+  margin: 8px 0 0; padding: 10px 12px; border-radius: 6px;
+  background: var(--el-head); border-left: 3px solid var(--el-blue-line);
+  font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 11.5px;
+  line-height: 1.85; color: var(--el-text-2); white-space: pre-wrap; word-break: break-all;
+}
+
+/* ---- 操作区 ---- */
+.ex-ops {
+  display: flex; align-items: center; gap: 9px; flex-wrap: wrap;
+  margin-top: 11px; padding-top: 11px; border-top: 1px solid var(--el-line);
+}
+.ex-note { flex: 1 1 240px; min-width: 0; height: 30px; padding: 0 10px; border: 1px solid var(--el-line-2); border-radius: 6px; font-family: inherit; font-size: 12.5px; outline: none; }
+.ex-note:focus { border-color: var(--el-blue); }
+.ex-note::placeholder { color: var(--el-text-4); }
+.ex-link { font-size: 12.5px; color: var(--el-blue); text-decoration: none; }
+.ex-link:hover { text-decoration: underline; }
+.ex-rev, .ex-note-text { font-size: 11.5px; color: var(--el-text-3); }
+.ex-note-text::before { content: "｜"; }
+
+/* ---- 审计留痕 ---- */
+/* 流水表：四列定宽（时间/动作/操作人/详情），详情列吞掉剩余宽度。
+   刻意不用表格——留痕是纯读列表，网格能让详情的换行不把时间列挤歪。 */
+.ex-audit {
+  display: flex; flex-direction: column;
+  border: 1px solid var(--el-line); border-radius: 8px;
+  background: #fff; overflow: hidden;
+}
+.ex-audit-row {
+  display: grid; grid-template-columns: 138px 76px 76px minmax(0, 1fr);
+  gap: 10px; align-items: baseline;
+  padding: 8px 12px; border-top: 1px solid var(--el-line);
+  font-size: 12px;
+}
+.ex-audit-row:first-child { border-top: none; }
+.ex-audit-row:hover { background: #fafbfd; }
+.ex-audit-ts {
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: 11.5px; color: var(--el-text-4); white-space: nowrap;
+}
+.ex-audit-act {
+  justify-self: start; padding: 1px 7px; border-radius: 4px;
+  font-size: 11.5px; white-space: nowrap;
+  background: #f2f3f5; color: var(--el-text-2);
+}
+/* 语气分组：真发过/被驳回是需要人负责的动作，给足颜色；
+   配置类与容量清理是系统自身维护，淡处理，避免淹没关键行。 */
+.ex-audit-act.real  { background: var(--el-low-bg); color: var(--el-low); }
+.ex-audit-act.mute  { background: #f2f3f5; color: var(--el-text-3); }
+.ex-audit-act.cfg   { background: var(--el-head); color: var(--el-text-4); }
+.ex-audit-act.queue { background: var(--el-med-bg); color: var(--el-med); }
+.ex-audit-op {
+  font-size: 11.5px; color: var(--el-text-3);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.ex-audit-detail {
+  color: var(--el-text-2); line-height: 1.7;
+  word-break: break-all;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+@media (max-width: 720px) {
+  .ex-form { grid-template-columns: 1fr; }
+  .ex-gate-row { grid-template-columns: 16px 1fr; }
+  .ex-gate-exp, .ex-gate-act { grid-column: 2; }
+  .ex-status { margin-left: 0; }
+  /* 窄屏把流水折成两行：首行时间+动作+操作人，次行详情占满宽度 */
+  .ex-audit-row { grid-template-columns: 1fr auto auto; row-gap: 3px; }
+  .ex-audit-detail { grid-column: 1 / -1; white-space: normal; }
+}
+
+/* ============ 顶栏用户区 ============ */
+/* 商务风处理——原实现有两处不像企业导航的地方：
+   ① 退出按钮是「白底 + 淡蓝字」：白色实心块在深蓝顶栏上最抢眼，而白底上的淡蓝字
+      对比度极低、几乎读不出字。改为透明底 + 白色描边 + 白字，悬停才浮出一层淡白，
+      既解决可读性，也回到企业导航该有的克制。
+   ② 头像用主色渐变：与顶栏底色同为深蓝，轮廓等于没有。改用半透明白做层次。 */
+.user-box {
+  /* 侧栏版：钉在栏底，上方细分隔线与导航区分（原顶栏版是 margin-left:auto 的右端横排） */
+  margin-top: auto; display: flex; align-items: center; gap: 10px;
+  padding: 14px 4px 0; border-top: 1px solid rgba(255, 255, 255, .16);
+}
+.user-avatar {
+  width: 32px; height: 32px; border-radius: 50%; flex: none;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700; color: #fff;
+  /* 底色 .18 + 描边 .48：首字白字对比度 5.0:1，圆环轮廓 3.1:1（均达标） */
+  background: rgba(255, 255, 255, .18);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .48);
+}
+.user-meta { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; }
+.user-name { font-size: 13px; font-weight: 600; color: #fff; letter-spacing: .2px; }
+/* .72 是算出来的下界：叠在最浅的渐变右端也还有 4.9:1，达标正文 4.5:1 */
+.user-role { font-size: 11px; color: rgba(255, 255, 255, .72); }
+.btn.small { padding: 5px 12px; font-size: 12px; }
+/* 退出：描边幽灵按钮（覆盖全局 .btn.ghost 的白底，避免深蓝顶栏上出现白色实心块）
+   描边取 .50 而非更淡的值：按钮是透明底，边框是它唯一的形状边界，
+   需满足 WCAG 1.4.11 非文字对比度 3:1（.38 实测只有 2.55:1，.50 为 3.2:1）。 */
+.sidebar .btn.ghost {
+  background: transparent;
+  border-color: rgba(255, 255, 255, .50);
+  color: rgba(255, 255, 255, .92);
+}
+.sidebar .btn.ghost:hover {
+  background: rgba(255, 255, 255, .14);
+  border-color: rgba(255, 255, 255, .74);
+  color: #fff;
+}
+
+/* ---- 退出确认弹窗 ---- */
+/* 复用全站 .modal 组件，只补"身份卡片 + 说明文字"两处专属样式 */
+.modal.modal-confirm { max-width: 400px; }
+.confirm-card {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px; border-radius: 8px;
+  background: var(--primary-soft); border: 1px solid var(--line);
+}
+.confirm-avatar {
+  width: 34px; height: 34px; border-radius: 50%; flex: none;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; font-weight: 700; color: #fff;
+  background: linear-gradient(135deg, var(--primary), var(--primary-2));
+}
+.confirm-meta { display: flex; flex-direction: column; line-height: 1.3; min-width: 0; }
+.confirm-name { font-size: 14px; font-weight: 600; color: var(--text); }
+.confirm-role { font-size: 12px; color: var(--muted); }
+.confirm-text { margin: 12px 0 0; font-size: 12.5px; color: var(--muted); line-height: 1.75; }
+
+/* ============ 登录页 ============ */
+/* 权威视觉语言：深藏青底 + 金色律线 + 衬线公文标题 + 机构徽记 */
+.login-body { margin: 0; background: #e9edf3; }
+.login-wrap { display: grid; grid-template-columns: 1.18fr 1fr; min-height: 100vh; }
+
+/* ---- 左侧：机构品牌区 ---- */
+.login-brand {
+  position: relative;
+  background: linear-gradient(168deg, #061223 0%, #0a1e36 48%, #0f2947 100%);
+  color: #e6ecf6;
+  padding: 48px 60px 42px;
+  display: flex; flex-direction: column; overflow: hidden;
+}
+/* 防伪细网格底纹（法务/公文质感） */
+.login-brand::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background-image:
+    repeating-linear-gradient(0deg, rgba(150,180,220,.05) 0 1px, transparent 1px 34px),
+    repeating-linear-gradient(90deg, rgba(150,180,220,.05) 0 1px, transparent 1px 34px);
+}
+/* 右下角金色微光，替代原来的亮蓝光斑，更沉稳 */
+.login-brand::after {
+  content: ""; position: absolute; right: -170px; bottom: -230px; width: 580px; height: 580px;
+  background: radial-gradient(circle, rgba(199,154,58,.16), transparent 62%); pointer-events: none;
+}
+.login-brand > * { position: relative; z-index: 1; }
+
+/* 机构抬头 */
+.brand-head { display: flex; align-items: center; gap: 13px; }
+.brand-crest {
+  flex: 0 0 auto; width: 46px; height: 46px; border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+  color: #d9b96a;
+  background: linear-gradient(160deg, rgba(199,154,58,.2), rgba(199,154,58,.06));
+  border: 1px solid rgba(199,154,58,.42);
+}
+.brand-org { font-size: 15px; font-weight: 600; letter-spacing: 2px; color: #eaf0f8; }
+.brand-meta { font-size: 11.5px; color: #7d95b6; letter-spacing: 1.2px; margin-top: 3px; }
+/* 金色律线：机构抬头与主标题之间的分隔 */
+.brand-rule { height: 1px; margin: 22px 0 26px; background: linear-gradient(90deg, rgba(199,154,58,.78), rgba(199,154,58,.28) 42%, rgba(199,154,58,0)); }
+
+.pill {
+  align-self: flex-start; border: 1px solid rgba(199,154,58,.45); color: #d5ba7d;
+  font-size: 11.5px; padding: 4px 11px; border-radius: 3px; letter-spacing: 1px;
+}
+.login-title {
+  font-family: "Songti SC", "SimSun", "Source Han Serif SC", "Noto Serif SC", "Times New Roman", serif;
+  font-size: 40px; line-height: 1.42; font-weight: 700;
+  margin: 20px 0 20px; color: #fff; letter-spacing: 4px;
+}
+.login-desc { max-width: 540px; color: #9db2cf; font-size: 13.5px; line-height: 2; margin: 0; }
+
+/* 特性清单：改为带编号的条目式，逐行细线分隔，更像正式系统说明 */
+.login-feats { list-style: none; padding: 0; margin: 32px 0 0; }
+.login-feats li {
+  display: flex; align-items: center; gap: 12px;
+  padding: 13px 0; font-size: 13.5px; color: #cfdcec;
+  border-top: 1px solid rgba(160,190,225,.1);
+}
+.feat-no {
+  flex: 0 0 26px; font-size: 11px; letter-spacing: 1px; color: #c2a055;
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+}
+.feat-ico { display: flex; color: #7fa3cf; flex: 0 0 auto; }
+.feat-txt { flex: 1; }
+
+/* 底部：合规与安全标识条 */
+.brand-foot { margin-top: auto; padding-top: 30px; }
+.brand-marks { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; }
+.brand-marks .mark { padding: 0 16px; border-left: 1px solid rgba(199,154,58,.28); }
+.brand-marks .mark:first-child { padding-left: 0; border-left: 0; }
+.mark-k { display: block; font-size: 11px; color: #7d95b6; letter-spacing: 1px; margin-bottom: 5px; }
+.mark-v { display: block; font-size: 12.5px; color: #dbe5f1; }
+.login-footnote { margin-top: 22px; padding-top: 16px; font-size: 11.5px; line-height: 1.9; color: #7d95b6; border-top: 1px solid rgba(160,190,225,.14); }
+
+/* ---- 右侧：登录卡 ---- */
+.login-panel { display: flex; align-items: center; justify-content: center; padding: 40px; }
+.login-card {
+  position: relative; width: 100%; max-width: 392px; background: #fff;
+  border: 1px solid #e2e7ee; border-radius: 6px; padding: 36px 34px 32px;
+  box-shadow: 0 20px 52px rgba(12,32,60,.16), 0 2px 6px rgba(12,32,60,.06);
+}
+/* 卡片顶部金色压线：权威感的关键细节 */
+.login-card::before {
+  content: ""; position: absolute; left: 0; right: 0; top: 0; height: 3px;
+  background: linear-gradient(90deg, #8f6b1f, #c79a3a 38%, #e3c377 62%, #c79a3a);
+  border-radius: 6px 6px 0 0;
+}
+.card-head { display: flex; align-items: center; justify-content: space-between; }
+.login-card-title {
+  font-size: 20px; font-weight: 700; margin: 0; color: var(--text);
+  letter-spacing: 3px; padding-left: 12px; border-left: 3px solid var(--primary); line-height: 1.1;
+}
+.secure-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11px; color: #96701c; letter-spacing: .5px;
+  background: #fdf8ea; border: 1px solid rgba(199,154,58,.5);
+  border-radius: 3px; padding: 3px 8px;
+}
+.login-card-sub { font-size: 12.5px; color: var(--muted); margin: 14px 0 22px; }
+
+.login-field {
+  position: relative; display: flex; align-items: center;
+  border: 1px solid #dbe1ea; border-radius: 4px; padding: 0 12px;
+  margin-bottom: 14px; background: #fafbfd;
+  transition: border-color .15s, box-shadow .15s, background .15s;
+}
+.login-field:focus-within { border-color: var(--primary); background: #fff; box-shadow: 0 0 0 3px rgba(26,58,110,.1); }
+.login-field .f-ico { color: #98a2b3; display: flex; }
+.login-field input { flex: 1; border: 0; outline: 0; background: transparent; padding: 12px 10px; font-size: 14px; color: var(--text); }
+.login-field .f-eye { cursor: pointer; color: #98a2b3; display: flex; user-select: none; }
+.login-field .f-eye:hover { color: var(--primary); }
+.login-error { color: var(--high); font-size: 12.5px; min-height: 18px; margin: 0 0 8px; }
+
+/* 主按钮：深蓝实色 + 金色描边，去掉亮蓝渐变 */
+/* 登录主按钮：同样承载金色涟漪，需相对定位 + 裁切 */
+.login-btn {
+  position: relative; overflow: hidden;
+  width: 100%; border: 1px solid rgba(199,154,58,.34); border-radius: 4px; padding: 13px;
+  font-size: 15px; font-weight: 600; letter-spacing: 8px; text-indent: 8px; color: #fff;
+  background: linear-gradient(180deg, #1d4478, #14315c);
+  cursor: pointer; transition: filter .15s, box-shadow .15s;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.14), 0 2px 8px rgba(20,49,92,.22);
+}
+/* 登录主按钮悬停：金辉叠加，与全站金色强调一致 */
+.login-btn:hover { filter: brightness(1.12); box-shadow: inset 0 1px 0 rgba(255,255,255,.14), 0 4px 16px rgba(199,154,58,.35); }
+.login-btn:disabled { opacity: .68; cursor: default; }
+
+/* 演示账号区：加顶部细线做分区，更像正式系统的凭据表 */
+.demo-head { display: flex; justify-content: space-between; align-items: center; margin: 24px 0 10px; padding-top: 18px; border-top: 1px solid var(--line); font-size: 12.5px; color: #8a939f; }
+.demo-tag { border: 1px solid #e0e5ec; border-radius: 3px; padding: 2px 8px; font-size: 11.5px; color: #8a939f; }
+.demo-list { display: grid; gap: 8px; }
+.demo-row {
+  display: flex; justify-content: space-between; align-items: center;
+  border: 1px solid #e7ebf1; border-left: 3px solid #d8dfe9; border-radius: 4px;
+  padding: 9px 12px; cursor: pointer; background: #fff;
+  transition: border-color .15s, background .15s;
+}
+.demo-row:hover { border-color: var(--primary-2); border-left-color: var(--accent); background: #f7faff; }
+.demo-role { font-size: 13px; font-weight: 700; color: var(--text); }
+.demo-name { font-size: 11.5px; color: #98a2b3; margin-left: 6px; }
+/* 登录邮箱较长（姓名全拼），字号收小并允许在 @ 前折行，避免撑破卡片 */
+.demo-cred {
+  flex: 0 0 auto; font-size: 11.5px; color: #667085; text-align: right; line-height: 1.5;
+  font-family: ui-monospace, Menlo, Consolas, monospace; word-break: break-all; max-width: 60%;
+}
+
+@media (max-width: 1040px) { .brand-marks { grid-template-columns: 1fr; gap: 11px; } .brand-marks .mark { padding: 0; border-left: 0; } }
+@media (max-width: 900px) { .login-wrap { grid-template-columns: 1fr; } .login-brand { display: none; } }
+
+/* ---------------- 非合同拦截面板 ---------------- */
+.reject-box { background: #fff8f1; border: 1px solid #f0d4b4; border-radius: 10px; padding: 18px; white-space: normal; box-shadow: var(--shadow-sm); }
+.reject-box h3 { margin: 0 0 8px; color: #b5631b; font-size: 15px; }
+.reject-box h4 { margin: 16px 0 8px; font-size: 13px; color: #7a5326; }
+.reject-reason { font-size: 13px; color: #4a525c; margin: 8px 0; }
+.reject-score { font-size: 13px; color: #7a5326; margin: 8px 0; }
+.signal-table { width: 100%; border-collapse: collapse; font-size: 12.5px; background: #fff; border-radius: 6px; overflow: hidden; box-shadow: var(--shadow-sm); }
+.signal-table td { padding: 8px 11px; border: 1px solid var(--line); }
+.signal-table td:first-child { width: 140px; color: var(--muted); background: #f7f9fc; font-weight: 500; }
+
+/* ---------------- 业务类型选择弹窗 ---------------- */
+.modal-mask {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(20, 30, 50, .38);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+  animation: maskIn .12s ease-out;
+}
+/* 通用隐藏语义：全站统一用 class="hidden" 表达"不显示"。
+   此前只有 .view.hidden / .modal-mask.hidden 等局部规则，
+   于是 .btn.hidden、.scan-summary.hidden 这类写法其实不生效——
+   「重新识别」按钮与空的预览框一直露在外面。补一条通用规则根治。 */
+.hidden { display: none !important; }
+.modal-mask.hidden { display: none; }
+@keyframes maskIn { from { opacity: 0; } to { opacity: 1; } }
+
+.modal {
+  width: 100%; max-width: 420px;
+  background: var(--card); border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(20, 34, 64, .28), 0 2px 8px rgba(20, 34, 64, .12);
+  overflow: hidden;
+  animation: modalIn .16s ease-out;
+}
+@keyframes modalIn {
+  from { opacity: 0; transform: translateY(-10px) scale(.98); }
+  to   { opacity: 1; transform: none; }
+}
+
+.modal-head {
+  display: flex; align-items: center; gap: 11px;
+  padding: 16px 20px;
+  background: linear-gradient(90deg, var(--primary) 0%, var(--primary-2) 100%);
+  /* 标题金色压线：蓝头下方压一条金线，与登录卡/顶栏的金色语言一致 */
+  border-bottom: 2px solid var(--accent);
+  color: #fff;
+}
+.modal-icon { font-size: 22px; line-height: 1; }
+.modal-title { font-size: 15px; font-weight: 600; letter-spacing: .3px; }
+.modal-sub { font-size: 12px; opacity: .82; margin-top: 3px; }
+
+.modal-body { padding: 18px 20px 6px; }
+.field-label {
+  display: block; font-size: 12.5px; font-weight: 600;
+  color: var(--muted); margin-bottom: 7px;
+}
+.modal-select { width: 100%; }
+.field-hint {
+  font-size: 12px; color: var(--muted); margin: 10px 0 0;
+  word-break: break-all;
+}
+.field-hint b { color: var(--text); font-weight: 500; }
+
+.modal-foot {
+  display: flex; justify-content: flex-end; gap: 10px;
+  padding: 14px 20px 18px;
+}
+.btn.ghost { background: #fff; color: var(--muted); }
+.btn.ghost:hover { color: var(--primary); border-color: var(--primary); }
+
+/* ---------------- 拍照 / 图片识别 ---------------- */
+/* 入口按钮：与"上传合同"并排，用描边风格弱化一级，避免两个实心主按钮抢焦点 */
+.btn.scan-btn { background: #fff; border-color: var(--el-blue-line); color: var(--el-blue); }
+.btn.scan-btn:hover { background: var(--el-blue-bg); border-color: var(--el-blue); }
+
+/* 弹窗内容比业务类型弹窗多（引擎列表 + 照片预览 + 体检 + 尝试链路 + 校对区），
+   故放宽宽度并让正文区内部滚动，避免小屏上底部按钮被挤出视口 */
+.modal.modal-scan { max-width: 640px; max-height: calc(100vh - 40px); display: flex; flex-direction: column; }
+.modal-scan .modal-body { overflow-y: auto; }
+.modal-scan .modal-foot { border-top: 1px solid var(--line); padding-top: 12px; }
+
+/* 引擎能力条 */
+.scan-providers {
+  border: 1px solid var(--el-line); border-radius: 8px;
+  padding: 10px 12px; background: #fafbfd; margin-bottom: 14px;
+}
+.scan-providers-loading { font-size: 12px; color: var(--el-text-3); }
+.scan-providers-head {
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 10px; flex-wrap: wrap; font-size: 12px; margin-bottom: 9px;
+}
+.scan-providers-title { font-weight: 600; color: var(--muted); }
+.scan-ok { color: var(--el-low); }
+.scan-warn { color: var(--el-med); }
+.scan-providers-list { display: flex; flex-wrap: wrap; gap: 8px; }
+/* 「重新检测」：引擎多在"服务已开着"时装好，故必须能免重启刷新能力，按钮要一直显眼可点 */
+.scan-reprobe {
+  font-size: 11.5px; padding: 3px 10px; border-radius: 6px; cursor: pointer;
+  border: 1px solid var(--el-line-2); background: #fff; color: var(--el-text-2);
+}
+.scan-reprobe:hover { border-color: var(--brand); color: var(--brand); }
+/* 引擎不可用时的补充说明：把"无需重启"和排查线索（解释器/检测时间）一起给出 */
+.scan-providers-tip {
+  margin-top: 9px; padding-top: 8px; border-top: 1px dashed var(--el-line);
+  font-size: 11.5px; color: var(--el-text-3); line-height: 1.7;
+}
+.scan-providers-meta { display: block; font-size: 11px; color: var(--el-text-4); word-break: break-all; }
+.scan-provider {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 11.5px; padding: 4px 9px; border-radius: 999px;
+  border: 1px solid var(--el-line-2); background: #fff; cursor: help;
+}
+.scan-provider em { font-style: normal; font-size: 10.5px; opacity: .75; }
+.scan-provider.on { border-color: rgba(31, 157, 102, .45); background: var(--el-low-bg); color: var(--el-low); }
+.scan-provider.off { color: var(--el-text-3); }
+.scan-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex: none; }
+
+/* 添加照片区（整块可点击选图，也支持拖拽） */
+.scan-drop {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 10px;
+  padding: 14px; border: 1px dashed var(--el-line-2); border-radius: 8px;
+  background: #fcfdff; cursor: pointer;
+}
+.scan-drop:hover, .scan-drop.dragging { border-color: var(--el-blue); background: var(--el-blue-bg); }
+.scan-drop-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.scan-drop-hint { font-size: 11.5px; color: var(--el-text-3); }
+
+/* 页列表：每页一张卡片，页码即合同页序 */
+.scan-pages { margin-top: 14px; display: flex; flex-direction: column; gap: 10px; }
+.scan-page {
+  border: 1px solid var(--el-line); border-radius: 8px; background: #fff;
+  padding: 10px 12px;
+}
+.scan-page.is-ok { border-left: 3px solid var(--el-low); }
+.scan-page.is-fail { border-left: 3px solid var(--el-med); }
+.scan-page.is-loading { border-left: 3px solid var(--el-blue); }
+
+.scan-page-head { display: flex; align-items: flex-start; gap: 10px; }
+.scan-page-no {
+  flex: none; font-size: 11px; font-weight: 600; color: var(--el-text-2);
+  background: var(--el-head); border-radius: 4px; padding: 2px 7px; margin-top: 2px;
+}
+.scan-page-thumb {
+  width: 74px; height: 96px; object-fit: cover; flex: none;
+  border: 1px solid var(--el-line); border-radius: 6px; background: #f5f7fa;
+}
+.scan-page-info { flex: 1; min-width: 0; }
+.scan-page-status { font-size: 12px; margin-bottom: 6px; }
+.scan-page-status.ok { color: var(--el-low); }
+.scan-page-status.fail { color: var(--el-med); }
+.scan-page-status.loading { color: var(--el-blue); }
+.scan-page-ops { flex: none; display: flex; gap: 4px; }
+.scan-page-ops button {
+  font-size: 11px; line-height: 1.6; padding: 2px 7px; cursor: pointer;
+  border: 1px solid var(--el-line-2); border-radius: 5px;
+  background: #fff; color: var(--el-text-2);
+}
+.scan-page-ops button:hover { border-color: var(--el-blue); color: var(--el-blue); background: var(--el-blue-bg); }
+.scan-page-ops button:disabled { opacity: .4; cursor: not-allowed; }
+
+.scan-meta { display: flex; flex-wrap: wrap; gap: 6px; }
+.scan-chip {
+  font-size: 11px; padding: 3px 8px; border-radius: 999px;
+  background: var(--el-head); color: var(--el-text-2);
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+}
+.scan-warn-list { margin: 9px 0 0; padding-left: 0; list-style: none; font-size: 11.5px; color: var(--el-med); line-height: 1.9; }
+.scan-good { font-size: 11.5px; color: var(--el-low); }
+
+/* 引擎尝试链路：折叠起来，只在需要解释"为什么没识别出来"时展开 */
+.scan-attempts { margin-top: 10px; }
+.scan-attempts > summary { cursor: pointer; font-size: 11.5px; font-weight: 600; color: var(--muted); }
+.scan-attempt-list {
+  margin-top: 6px; padding: 8px 10px;
+  border: 1px dashed var(--el-line-2); border-radius: 8px; background: #fcfdff;
+}
+.scan-attempt { display: flex; gap: 8px; align-items: baseline; font-size: 11.5px; line-height: 1.95; }
+.scan-attempt-name { flex: none; color: var(--el-text-2); }
+.scan-attempt-status {
+  flex: none; padding: 0 6px; border-radius: 4px; font-size: 10.5px;
+  background: var(--el-head); color: var(--el-text-2);
+}
+.scan-attempt.skipped .scan-attempt-status { background: #f2f3f5; color: var(--el-text-3); }
+.scan-attempt.error .scan-attempt-status,
+.scan-attempt.empty .scan-attempt-status { background: var(--el-med-bg); color: var(--el-med); }
+.scan-attempt.ok .scan-attempt-status { background: var(--el-low-bg); color: var(--el-low); }
+.scan-attempt-reason { color: var(--el-text-3); word-break: break-all; }
+
+/* 逐页校对区：等宽字体便于逐字核对识别结果 */
+.scan-page-text {
+  margin-top: 10px; width: 100%; height: 118px; min-height: 118px;
+  font-size: 12.5px; font-family: ui-monospace, Menlo, Consolas, monospace;
+}
+
+/* 整批汇总 */
+.scan-summary {
+  margin-top: 12px; padding: 10px 12px; border-radius: 8px;
+  border: 1px solid var(--el-line); background: #fafbfd; font-size: 12px; line-height: 1.85;
+}
+.scan-summary.all-ok { border-color: rgba(31, 157, 102, .35); background: var(--el-low-bg); color: var(--el-low); }
+.scan-summary .scan-summary-gap { color: var(--el-med); }
+.scan-summary .scan-summary-note { color: var(--el-text-3); font-size: 11.5px; }
+
+.scan-empty {
+  margin-top: 12px; padding: 18px 14px; text-align: center; font-size: 12px;
+  color: var(--el-text-3); border: 1px dashed var(--el-line-2); border-radius: 8px; background: #fcfdff;
+}
+.scan-hint.ok { color: var(--el-low); }
+.scan-hint.warn { color: var(--el-med); }
+.scan-hint.err { color: var(--el-high); }
+
+@media (max-width: 640px) {
+  .scan-page-head { flex-wrap: wrap; }
+  .scan-page-ops { width: 100%; justify-content: flex-end; }
+  /* 窄屏侧栏折回顶部横条：固定左栏会让正文被压得过窄，故改为顶部 static 横排。
+     品牌/导航/用户区在同一行，导航项横向铺开，用户身份退化为头像。 */
+  .sidebar {
+    position: static; left: auto; top: auto; bottom: auto;
+    width: auto; flex-direction: row; align-items: center; flex-wrap: wrap;
+    gap: 12px; padding: 12px 14px;
+    border-right: none; border-bottom: 3px solid var(--accent);
+    box-shadow: 0 2px 14px rgba(26, 42, 74, .16);
+  }
+  .brand { font-size: 15px; }
+  .nav { flex-direction: row; flex-wrap: wrap; gap: 4px; }
+  .nav a { padding: 8px 12px; font-size: 13px; }
+  .nav a.active::before { left: 9px; right: 9px; top: auto; bottom: 0; width: auto; height: 3px; border-radius: 3px 3px 0 0; }
+  .user-box { margin-top: 0; padding: 0 0 0 12px; border-top: none; border-left: 1px solid rgba(255, 255, 255, .16); }
+  .user-meta { display: none; }
+  main { margin: 0 auto; padding: 18px 16px 36px; }
+}

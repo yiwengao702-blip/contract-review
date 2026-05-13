@@ -1,0 +1,46 @@
+# 主体资质库（签约相对方资格核验清单）
+# 结构：checks[].id / .name / .category / .level / .basis / .enabled
+#   · 承载「合规规则与模板」页第三个标签页「主体资质库」；
+#   · 由 RULE-ENT-001（签约主体缺失或经营异常）在审查时联动判定，
+#     命中缺失字段或失信表述时，把对应核验项作为人工复核待办一并列出。
+
+checks:
+  - id: PQ-001
+    name: 营业执照主体名称核验
+    category: 主体资质
+    level: high
+    enabled: true
+    basis: 比对合同签约主体名称与营业执照登记名称（含简称/别名归一化），名称不一致将导致主体不适格。
+    source: 国家企业信用信息公示系统
+
+  - id: PQ-002
+    name: 统一社会信用代码校验
+    category: 主体资质
+    level: high
+    enabled: true
+    basis: 校验 18 位统一社会信用代码的位数与校验位，识别缺失、笔误或虚假代码。
+    source: 合同元数据自动抽取
+
+  - id: PQ-003
+    name: 经营范围覆盖性核验
+    category: 主体资质
+    level: medium
+    enabled: true
+    basis: 判断相对方经营范围是否覆盖本次交易标的（如软件授权、设备制造、技术服务），避免超范围经营。
+    source: 营业执照登记信息
+
+  - id: PQ-004
+    name: 经营异常名录筛查
+    category: 主体资质
+    level: high
+    enabled: true
+    basis: 筛查相对方是否被列入经营异常名录（未年报、地址失联等），作为履约能力预警信号。
+    source: 国家企业信用信息公示系统
+
+  - id: PQ-005
+    name: 严重违法失信名单筛查
+    category: 主体资质
+    level: high
+    enabled: true
+    basis: 筛查失信被执行人、严重违法失信企业名单与吊销营业执照记录，命中时建议暂缓签约。
+    source: 全国法院失信被执行人名单 / 市监总局
