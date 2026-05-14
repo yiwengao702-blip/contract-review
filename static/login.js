@@ -85,4 +85,34 @@ document.getElementById("loginForm").onsubmit = async (e) => {
   } catch (e) { /* 忽略 */ }
 })();
 
+// 在线演示：一键以演示账号免登录进入（默认「法务合规经理」，可完整体验审查与规则库）
+document.getElementById("demoEnterBtn").onclick = async () => {
+  const demo = DEMO_ACCOUNTS[1] || DEMO_ACCOUNTS[0]; // 法务合规经理
+  const errBox = document.getElementById("loginError");
+  const btn = document.getElementById("demoEnterBtn");
+  errBox.textContent = "";
+  btn.disabled = true;
+  btn.textContent = "演示环境加载中…";
+  try {
+    const r = await fetch(API + "/api/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ account: demo.account, password: demo.password }),
+    });
+    if (!r.ok) {
+      const j = await r.json().catch(() => ({}));
+      errBox.textContent = j.detail || "演示登录失败，请稍后重试";
+      return;
+    }
+    const data = await r.json();
+    localStorage.setItem(SESSION_KEY, JSON.stringify(data));
+    location.replace("/");
+  } catch (err) {
+    errBox.textContent = "网络异常，请稍后重试";
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l14 9-14 9V3z"/></svg> 在线演示 · 免登录体验';
+  }
+};
+
 renderDemo();
