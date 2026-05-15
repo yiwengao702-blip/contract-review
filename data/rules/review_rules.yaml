@@ -204,3 +204,94 @@ rules:
     reason: 合同缺少标的物、价款付款或违约责任等核心必备条款，权利义务边界不完整，履行与追责均缺乏依据。
     legal_basis: 《民法典》第470条：合同内容一般包括标的、数量、价款或报酬、履行期限、违约责任、解决争议的方法等条款。
     recommend_key: ""
+
+  - id: RULE-PII-014
+    name: 个人信息不当归属或无限授权处理
+    level: high
+    category: 个人信息保护
+    scope: ["全部类型"]
+    match_mode: 关键字段匹配
+    enabled: true
+    type: text_regex
+    pattern: (个人信息|个人数据)[^。；]{0,40}?(归|归属|属于|由)[^。；]{0,12}?(乙方|供方|受托方|对方)(所有|享有|自由使用|无条件使用|永久使用|转让|转售)
+    reason: 合同约定个人信息或数据整体归属相对方，或授予其无限制、永久的处理与转售权利，我方及终端用户的个人信息权益易受侵害，可能超出《个人信息保护法》允许的处理目的与最小必要原则。
+    legal_basis: 《个人信息保护法》第6条（最小必要原则）、第23条（向他人提供个人信息应取得单独同意）、第9条（处理者安全保障义务）。
+    recommend_key: pi_protection
+
+  - id: RULE-PII-015
+    name: 缺少个人信息保护条款
+    level: medium
+    category: 个人信息保护
+    scope: ["服务", "技术"]
+    match_mode: 必备条款缺失
+    enabled: true
+    type: clause_missing
+    required_category: 个人信息保护
+    reason: 服务/技术类合同通常涉及处理相对方或终端用户的个人信息，全文未约定个人信息保护义务（收集目的、最小必要、委托处理要求、泄露通知等），存在违反《个人信息保护法》的合规风险。
+    legal_basis: 《个人信息保护法》第9条、第21条、第55条：处理者应采取必要措施保障安全，委托处理应约定目的、期限、处理方式与保护义务。
+    recommend_key: pi_protection
+
+  - id: RULE-DC-016
+    name: 数据/信息出境未约定合规义务
+    level: medium
+    category: 数据合规
+    scope: ["全部类型"]
+    match_mode: 关键字段匹配
+    enabled: true
+    type: text_regex
+    pattern: (数据|信息)[^。；]{0,15}?(出境|跨境|向境外|境外提供|提供境外|传输至境外|转移给境外)
+    reason: 合同涉及数据或信息出境、向境外提供，但未约定安全评估、标准合同备案或境外接收方的保护义务，可能违反数据出境合规要求，面临监管处罚与数据主权风险。
+    legal_basis: 《数据出境安全评估办法》《个人信息保护法》第38-40条：向境外提供个人信息或重要数据应履行安全评估、标准合同等义务。
+    recommend_key: data_crossborder_security
+
+  - id: RULE-DC-017
+    name: 数据对外共享/委托处理缺少保护约定
+    level: medium
+    category: 数据合规
+    scope: ["全部类型"]
+    match_mode: 关键字段匹配
+    enabled: true
+    type: text_regex
+    pattern: (数据|信息)[^。；]{0,15}?(共享|委托处理|受托处理|对外提供|提供给第三方)
+    reason: 合同涉及数据或信息对外共享、委托处理，但未约定处理方式、保密义务与安全保护措施，数据泄露与滥用风险敞口过大。
+    legal_basis: 《数据安全法》第27条、《个人信息保护法》第21条：委托处理应约定委托方的监督权利与受托方的安全保护义务。
+    recommend_key: data_processing_security
+
+  - id: RULE-AM-018
+    name: 转售价格维持（RPM）
+    level: high
+    category: 反垄断
+    scope: ["销售", "采购"]
+    match_mode: 关键字段匹配
+    enabled: true
+    type: text_regex
+    pattern: (固定|维持|限定)[^。；]{0,15}?转售价格|最低转售价格|限定向第三人转售
+    reason: 约定经销商固定或维持最低转售价格，构成纵向价格垄断协议（RPM），依据《反垄断法》可被认定违法，存在被监管处罚与民事索赔风险。
+    legal_basis: 《反垄断法》第18条：禁止经营者对交易相对人限定向第三人转售商品的价格；纵向价格限制属违法推定情形。
+    recommend_key: antimonopoly_compliance
+
+  - id: RULE-AM-019
+    name: 排他/独家交易限制竞争
+    level: high
+    category: 反垄断
+    scope: ["销售", "采购"]
+    match_mode: 关键字段匹配
+    enabled: true
+    type: text_regex
+    pattern: 排他性[^。；]{0,15}?(交易|采购|供货|销售)|独家经销|独家代理|不得与[^。；]{0,15}?以外的.{0,8}(交易|采购|供货)
+    reason: 约定排他或独家交易，限制相对方与第三方交易，可能排除、限制相关市场竞争，构成纵向非价格垄断协议，存在反垄断合规风险。
+    legal_basis: 《反垄断法》第18条、第22条：排他性交易安排若具市场封锁效果，可能被认定为排除、限制竞争的垄断协议。
+    recommend_key: antimonopoly_compliance
+
+  - id: RULE-AM-020
+    name: 销售区域/窜货限制（地域限制）
+    level: medium
+    category: 反垄断
+    scope: ["销售", "采购"]
+    match_mode: 关键字段匹配
+    enabled: true
+    type: text_regex
+    pattern: 限制[^。；]{0,15}?(销售区域|经营区域|跨区销售|窜货)|跨区销售[^。；]{0,10}?违约金
+    reason: 对经销方施加严格的销售区域限制并设窜货违约金，若与纵向市场封锁结合，可能被认定为不合理的地域限制，需评估反垄断风险。
+    legal_basis: 《反垄断法》第18条：地域限制属纵向非价格限制，需结合市场影响评估其合规性。
+    recommend_key: antimonopoly_compliance

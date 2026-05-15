@@ -24,6 +24,7 @@ CATEGORY_KEYWORDS: List[Tuple[str, ClauseCategory]] = [
     ("违约", ClauseCategory.LIABILITY),
     ("赔偿", ClauseCategory.LIABILITY),
     ("保密", ClauseCategory.CONFIDENTIALITY),
+    ("个人信息", ClauseCategory.PII),
     ("数据", ClauseCategory.DATA_SECURITY),
     ("安全", ClauseCategory.DATA_SECURITY),
     ("争议", ClauseCategory.JURISDICTION),

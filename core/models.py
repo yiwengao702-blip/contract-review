@@ -42,6 +42,7 @@ class ClauseCategory(str, Enum):
     LIABILITY = "违约责任"        # 违约责任
     CONFIDENTIALITY = "保密义务"  # 保密义务
     DATA_SECURITY = "数据安全"    # 数据安全
+    PII = "个人信息保护"         # 个人信息保护
     JURISDICTION = "争议解决管辖" # 争议解决管辖
     OTHER = "其他"               # 其他
 
