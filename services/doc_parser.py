@@ -31,6 +31,20 @@ CATEGORY_KEYWORDS: List[Tuple[str, ClauseCategory]] = [
     ("管辖", ClauseCategory.JURISDICTION),
     ("仲裁", ClauseCategory.JURISDICTION),
     ("诉讼", ClauseCategory.JURISDICTION),
+    ("纠纷", ClauseCategory.JURISDICTION),
+    # 廉洁合规（反商业贿赂）：仅在标题行含以下关键词时才归类为廉洁合规条款，
+    # 缺失该类标题即被 clause_missing 判为「缺少反商业贿赂条款」。
+    ("廉洁", ClauseCategory.COMPLIANCE),
+    ("贿赂", ClauseCategory.COMPLIANCE),
+    ("回扣", ClauseCategory.COMPLIANCE),
+    ("商业贿赂", ClauseCategory.COMPLIANCE),
+    ("反腐败", ClauseCategory.COMPLIANCE),
+    # 合同解除与终止：放在违约责任（违约/赔偿）之后，
+    # 保证「违约责任与合同解除」这类复合标题仍优先归入「违约责任」，不被抢类。
+    ("解除", ClauseCategory.TERMINATION),
+    ("终止", ClauseCategory.TERMINATION),
+    ("续约", ClauseCategory.TERMINATION),
+    ("续展", ClauseCategory.TERMINATION),
 ]
 
 

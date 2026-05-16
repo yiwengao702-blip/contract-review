@@ -44,6 +44,8 @@ class ClauseCategory(str, Enum):
     DATA_SECURITY = "数据安全"    # 数据安全
     PII = "个人信息保护"         # 个人信息保护
     JURISDICTION = "争议解决管辖" # 争议解决管辖
+    COMPLIANCE = "廉洁合规"      # 廉洁合规（反商业贿赂）
+    TERMINATION = "合同解除与终止" # 合同解除与终止
     OTHER = "其他"               # 其他
 
 

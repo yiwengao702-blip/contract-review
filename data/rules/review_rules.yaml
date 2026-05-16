@@ -295,3 +295,83 @@ rules:
     reason: 对经销方施加严格的销售区域限制并设窜货违约金，若与纵向市场封锁结合，可能被认定为不合理的地域限制，需评估反垄断风险。
     legal_basis: 《反垄断法》第18条：地域限制属纵向非价格限制，需结合市场影响评估其合规性。
     recommend_key: antimonopoly_compliance
+
+  - id: RULE-COMP-021
+    name: 缺失反商业贿赂（廉洁）条款
+    level: medium
+    category: 廉洁合规
+    scope: ["采购", "销售", "服务"]
+    match_mode: 必备条款缺失
+    enabled: true
+    type: clause_missing
+    required_category: 廉洁合规
+    reason: 采购/销售/服务类商业合同未约定反商业贿赂或廉洁从业条款，缺乏对商业贿赂、回扣、利益冲突的约束，易引发合规与纪检监察风险，亦不符合大型企业供应商管理与合规体系要求。
+    legal_basis: 《反不正当竞争法》第7条禁止商业贿赂；《中央企业合规管理办法》要求将反贿赂纳入合规管理制度。
+    recommend_key: anti_bribery
+
+  - id: RULE-COMP-022
+    name: 廉洁条款缺少违约责任
+    level: medium
+    category: 廉洁合规
+    scope: ["全部类型"]
+    match_mode: 条款内容缺失要素
+    enabled: true
+    type: text_absent
+    target_category: 廉洁合规
+    required_pattern: 赔偿|违约责任|法律责|处以|罚款|返还
+    reason: 合同已约定廉洁/反商业贿赂义务，但未明确违反时的赔偿责任、处罚或返还机制，禁止性约定缺乏可执行的救济抓手，约束力不足。
+    legal_basis: 廉洁条款应配套违约责任，使商业贿赂等禁止性约定具备可追溯、可追责的救济路径。
+    recommend_key: anti_bribery
+
+  - id: RULE-TERM-023
+    name: 单方任意解除/变更权（显失公平）
+    level: high
+    category: 合同解除与终止
+    scope: ["全部类型"]
+    match_mode: 关键字段匹配
+    enabled: true
+    type: text_regex
+    pattern: 单方[^。；]{0,8}?(解除|变更|修改|调整)[^。；]{0,6}?合同|任意(解除|终止|变更)|无须(通知|协商|对方同意)[^。；]{0,10}?(解除|变更)|一方可(随时|单方面)(解除|终止)
+    reason: 约定一方可单方、任意或无条件解除、变更合同，排除对方主要权利、加重对方责任，属显失公平的格式条款；我方若为相对方则风险敞口极大，亦可能被认定无效。
+    legal_basis: 《民法典》第496/497条：提供格式条款一方不合理免除或减轻其责任、加重对方责任、限制对方主要权利的，该条款可能无效。
+    recommend_key: termination_balance
+
+  - id: RULE-TERM-024
+    name: 自动续约未约定退出机制
+    level: medium
+    category: 合同解除与终止
+    scope: ["全部类型"]
+    match_mode: 关键字段匹配
+    enabled: true
+    type: text_regex
+    pattern: (自动续约|自动续期|期满自动延长|到期自动顺延|自动延期)[^。；]{0,30}?(未|不|无)(约定|通知|书面|提前|退出|终止)
+    reason: 合同约定到期自动续约/顺延，但未约定提前通知期限与退出机制，企业易在不知情下被动续约，资金与履约被动绑定，增加退出成本。
+    legal_basis: 自动续约应配套明确的提前通知与退出条款，保障当事人的合同自由与知情选择权。
+    recommend_key: auto_renew_notice
+
+  - id: RULE-TERM-026
+    name: 解除权行使缺少通知程序
+    level: medium
+    category: 合同解除与终止
+    scope: ["全部类型"]
+    match_mode: 条款内容缺失要素
+    enabled: true
+    type: text_absent
+    target_category: 合同解除与终止
+    required_pattern: 通知|书面|提前|合理期限|异议
+    reason: 合同设有专门的解除/终止条款，但未约定行使方式（书面通知、提前期、异议期），解除权行使易生程序争议，影响救济时效与证据留存。
+    legal_basis: 《民法典》第565条：当事人一方依法主张解除合同的，应当通知对方，合同自通知到达时解除。
+    recommend_key: termination_balance
+
+  - id: RULE-JUR-025
+    name: 缺少争议解决/管辖条款
+    level: medium
+    category: 争议管辖
+    scope: ["全部类型"]
+    match_mode: 必备条款缺失
+    enabled: true
+    type: clause_missing
+    required_category: 争议解决管辖
+    reason: 全文未检出争议解决、管辖或仲裁约定，发生纠纷时管辖法院/仲裁机构不明，可能增加维权成本与不确定性，对我方诉讼地位不利。
+    legal_basis: 《民法典》第470条将解决争议的方法列为合同一般应包括的条款；无约定时按法定管辖，可能偏离我方预期。
+    recommend_key: jurisdiction_standard
