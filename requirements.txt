@@ -11,6 +11,9 @@ pdfplumber==0.11.3
 pyyaml==6.0.2
 pydantic==2.9.2
 python-multipart==0.0.12
+# 审批系统评论区回写 / 钉钉 / 大模型审查均通过 HTTP 调用外部接口，依赖 requests。
+# 此前遗漏在依赖清单之外，干净环境 pip install -r 后会因 ImportError 启动失败。
+requests==2.32.3
 
 # ---- 可选：拍照 / 图片识别的依赖 ----
 # 说明：

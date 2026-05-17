@@ -1,6 +1,29 @@
 // 合同审批审查系统 - 前端逻辑（原生 JS，无构建依赖）
 const API = "";
 
+// [安全加固 Phase0] 自动为所有 API 请求注入会话令牌，配合后端 auth_guard 中间件。
+// 此前虽登录下发 token，但前端从未携带，鉴权形同虚设；此处统一补齐，且不改动各调用点。
+// 防御性：仅当运行环境本身提供 fetch 时才包裹（无头 DOM 桩、极旧浏览器下安全跳过）。
+(function injectAuthHeader() {
+  if (typeof window === "undefined" || typeof window.fetch !== "function") return;
+  const _origFetch = window.fetch.bind(window);
+  window.fetch = function (input, init) {
+    init = init || {};
+    try {
+      const s = JSON.parse(localStorage.getItem("cr_session") || "null");
+      if (s && s.token) {
+        init.headers = init.headers || {};
+        if (typeof init.headers.set === "function") {
+          init.headers.set("Authorization", "Bearer " + s.token);
+        } else {
+          init.headers["Authorization"] = "Bearer " + s.token;
+        }
+      }
+    } catch (e) {}
+    return _origFetch(input, init);
+  };
+})();
+
 // ---------------- 会话与角色权限 ----------------
 // 会话存于 localStorage；未登录访问主应用一律重定向到登录页。
 const SESSION_KEY = "cr_session";

@@ -33,8 +33,8 @@ from pathlib import Path
 from typing import List
 
 import yaml
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
+from fastapi.responses import FileResponse, StreamingResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from config import cfg
@@ -94,6 +94,34 @@ async def no_stale_cache(request, call_next):
     if not any(k.lower() == "cache-control" for k in resp.headers):
         resp.headers["Cache-Control"] = _NO_CACHE["Cache-Control"]
     return resp
+
+
+# ---------------------------------------------------------------------- #
+# [融合] 接入 sakura_base 共享底座的鉴权，替代原先散落的 SESSIONS 字典 + auth_guard。
+# 此前 /api/login 虽会下发 token，但所有业务接口从未校验它（P0 级越权）；
+# Phase0 已就地补洞，现进一步收敛为底座单源实现，四项目共用同一份鉴权代码。
+try:
+    from sakura_base.auth import sessions as sa_sessions
+    from sakura_base.auth.middleware import PathAuthMiddleware
+except ImportError as _imp_err:  # 提示先安装共享底座
+    raise RuntimeError(
+        "contract-review 现已依赖 sakura_base 共享底座，请先安装：\n"
+        "  pip install -e <sakura_platform>/packages/sakura_base[web]\n"
+        f"原始错误：{_imp_err}"
+    ) from _imp_err
+
+# 共享会话存储（令牌模式）：替代原先散落的 SESSIONS 字典
+_session_store = sa_sessions.SessionStore()
+
+
+# 对所有 /api/*（登录接口、静态资源、页面路由除外）强制校验 Bearer 令牌；
+# 令牌在 do_login 时经 _session_store.issue 签发，/api/logout 或重启后失效。
+app.add_middleware(
+    PathAuthMiddleware,
+    protected_prefixes=("/api/",),
+    public_paths={"/", "/index.html", "/login", "/login.html", "/api/login", "/static/", "/risk", "/risk.html"},
+    sessions=_session_store,  # 与 do_login 签发使用同一存储，否则令牌校验对不上
+)
 
 
 @app.get("/")
@@ -166,14 +194,26 @@ def do_login(payload: dict):
     user = DEMO_ACCOUNTS.get(account)
     if not user or user["password"] != password:
         raise HTTPException(status_code=401, detail="邮箱或密码错误")
+    # [融合] 经共享会话存储签发令牌，替代原手写 SESSIONS 字典
+    sess = _session_store.issue(account, user["role"], ttl=3600)
+    token = sess.token
     return {
         "ok": True,
-        "token": secrets.token_hex(16),
+        "token": token,
         "account": account,
         "role": user["role"],
         "role_name": user["role_name"],
         "display_name": user["display_name"],
     }
+
+
+@app.post("/api/logout")
+def do_logout(request: Request):
+    """吊销当前会话令牌（前端同时清除 localStorage 中的会话）。"""
+    auth = request.headers.get("Authorization", "")
+    token = auth[7:].strip() if auth.lower().startswith("bearer ") else request.query_params.get("token", "")
+    _session_store.revoke(token or "")
+    return {"ok": True}
 
 
 @app.get("/api/files/{task_id}")

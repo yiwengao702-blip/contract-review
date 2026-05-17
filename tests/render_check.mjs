@@ -11,6 +11,21 @@ import path from "node:path";
 const ROOT = path.resolve(import.meta.dirname, "..");
 const BASE = "http://127.0.0.1:18090";
 
+// [适配 auth_guard] 项目现已对 /api/* 强制校验 Bearer 令牌（sakura_base.PathAuthMiddleware）。
+// 自检作为一个"字段契约红线"测试，需要在真实鉴权环境下跑通，因此先以演示账号登录拿令牌，
+// 再把它同时喂给：① app.js 内部 fetch（经 localStorage 会话）、② 本测试直接发的业务请求。
+// 不采用"把业务接口设为公开"的做法——那会回退到此前 P0 级越权漏洞。
+const _login = await fetch(`${BASE}/api/login`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ account: "zhoumingyuan@gmail.com", password: "zhoumingyuan" }),
+});
+if (!_login.ok) throw new Error("自检登录失败: HTTP " + _login.status);
+const TOKEN = (await _login.json()).token;
+// 本测试直接发起的业务请求统一带上令牌（app.js 内部的 fetch 由下方 sessionStub 经注入逻辑补齐）
+const authFetch = (url, opt = {}) =>
+  fetch(url, { ...opt, headers: { ...(opt.headers || {}), Authorization: "Bearer " + TOKEN } });
+
 // ---------------- 最小 DOM stub ----------------
 // 只实现 app.js 顶层会碰到的接口；不需要真实布局能力。
 const store = new Map();
@@ -52,7 +67,7 @@ const documentStub = {
 // 退出确认要靠"会话被清掉 / 页面被跳转"这两个副作用来断言，所以它们必须可观测
 const removedKeys = [];
 const nav = { to: null };
-const sessionStub = JSON.stringify({ role: "legal", display_name: "自检", role_name: "法务合规经理" });
+const sessionStub = JSON.stringify({ role: "legal", display_name: "自检", role_name: "法务合规经理", token: TOKEN });
 const src = fs.readFileSync(path.join(ROOT, "static/app.js"), "utf8");
 const build = new Function(
   "document", "window", "navigator", "location", "alert", "URL", "Blob",
@@ -66,7 +81,12 @@ const build = new Function(
 );
 // app.js 里 API = ""，请求走相对路径；Node 里相对路径无 base，
 // 所以这里把 fetch 包一层补全成绝对地址，让顶层的 loadTasks() 也能正常跑完。
-const fetchStub = (u, opt) => fetch(typeof u === "string" && u.startsWith("http") ? u : BASE + u, opt);
+// 同时补上 Bearer 令牌：app.js 在 Node 桩里调用的是"裸 fetch"（即本桩参数），
+// 不会走真正的 window.fetch 包裹逻辑，所以令牌必须在这里直接注入，否则会被 auth_guard 拒掉。
+const fetchStub = (u, opt = {}) => {
+  const opt2 = { ...opt, headers: { ...(opt.headers || {}), Authorization: "Bearer " + TOKEN } };
+  return fetch(typeof u === "string" && u.startsWith("http") ? u : BASE + u, opt2);
+};
 const app = build(
   documentStub, { addEventListener() {} }, { clipboard: { writeText: async () => {} } },
   { replace: (u) => { nav.to = u; }, hash: "" },
@@ -76,7 +96,7 @@ const app = build(
 );
 
 // ---------------- 取真实数据 ----------------
-const data = await (await fetch(`${BASE}/api/rules/config`)).json();
+const data = await (await authFetch(`${BASE}/api/rules/config`)).json();
 app.RL_STATE.data = data;
 
 let fail = 0;
@@ -178,11 +198,11 @@ fd.append("file", new Blob([Buffer.from("%PDF-1.4\n" + "\u0000\u0001 not a pdf "
   { type: "application/pdf" }), "自检_无法解析.pdf");
 fd.append("contract_type", "采购");
 fd.append("auto_run", "true");
-await fetch(`${BASE}/api/tasks/upload`, { method: "POST", body: fd });
-await fetch(`${BASE}/api/export/scan`, { method: "POST" });
+await authFetch(`${BASE}/api/tasks/upload`, { method: "POST", body: fd });
+await authFetch(`${BASE}/api/export/scan`, { method: "POST" });
 
-const exCfg = await (await fetch(`${BASE}/api/export/config`)).json();
-const exQ = await (await fetch(`${BASE}/api/export/queue`)).json();
+const exCfg = await (await authFetch(`${BASE}/api/export/config`)).json();
+const exQ = await (await authFetch(`${BASE}/api/export/queue`)).json();
 app.EXPORT_STATE.config = exCfg;
 app.EXPORT_STATE.records = exQ.records || [];
 app.EXPORT_STATE.stats = exQ.stats || {};
