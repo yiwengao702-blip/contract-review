@@ -872,11 +872,17 @@ document.querySelectorAll("#rlTabs .rl-tab").forEach(btn => {
   };
 });
 
-// 新增按钮随标签页切换身份：审查规则库在 YAML 维护（无表单），条款库 / 资质库各开对应弹窗
+// 新增按钮始终可见：「添加条款」是用户高频意图，不应因当前标签被隐藏。
+// rules 标签下点它自动跳到「标准示范条款库」并弹窗；clauses / quals 标签下直接弹对应窗。
 function applyAddBtnForTab(tab) {
   const addBtn = document.getElementById("rlAddBtn");
   if (tab === "rules") {
-    addBtn.style.display = "none";
+    addBtn.style.display = "";
+    addBtn.textContent = "＋ 新增示范条款";
+    addBtn.onclick = () => {
+      document.querySelector('#rlTabs .rl-tab[data-tab="clauses"]').click();
+      openClauseModal();
+    };
   } else if (tab === "clauses") {
     addBtn.style.display = "";
     addBtn.textContent = "＋ 新增示范条款";

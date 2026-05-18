@@ -359,11 +359,11 @@ mark:hover { filter: brightness(.97); }
 }
 .rl-search {
   width: 100%; height: 32px; padding: 0 10px 0 30px; box-sizing: border-box;
-  border: 1px solid var(--el-line-2); border-radius: 6px;
+  border: 1px solid rgba(200,214,235,0.180); border-radius: 6px;
   font-family: inherit; font-size: 12.5px; color: var(--el-text);
-  background: #1b2336; outline: none;
+  background: #222d47; outline: none;
 }
-.rl-search:focus { border-color: var(--el-blue); background: #1c2438; box-shadow: 0 0 0 3px var(--el-blue-bg); }
+.rl-search:focus { border-color: var(--el-blue); background: #253250; box-shadow: 0 0 0 3px var(--el-blue-bg); }
 .rl-search::placeholder { color: var(--el-text-4); }
 
 /* 风险分级速筛胶囊：把"有几条高风险"这类最常问的问题变成一次点击 */
@@ -372,10 +372,10 @@ mark:hover { filter: brightness(.97); }
 .rl-lv-chip {
   display: inline-flex; align-items: center; gap: 5px;
   padding: 5px 10px; border-radius: 999px; cursor: pointer;
-  border: 1px solid var(--el-line-2); background: #1c2438;
+  border: 1px solid rgba(200,214,235,0.180); background: #253250;
   font-family: inherit; font-size: 12px; color: var(--el-text-2);
 }
-.rl-lv-chip:hover { border-color: rgba(200,214,235,0.145); }
+.rl-lv-chip:hover { border-color: rgba(200,214,235,0.300); background: #2a3857; }
 .rl-lv-dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
 .rl-lv-chip.high .rl-lv-dot { background: var(--el-high); }
 .rl-lv-chip.medium .rl-lv-dot { background: var(--el-med); }
@@ -392,10 +392,10 @@ mark:hover { filter: brightness(.97); }
 .rl-fb-stat b { color: var(--el-text); font-size: 14px; }
 .rl-clear-btn {
   padding: 5px 11px; border-radius: 999px; cursor: pointer; white-space: nowrap;
-  border: 1px solid var(--el-line-2); background: #1c2438;
+  border: 1px solid rgba(200,214,235,0.180); background: #253250;
   font-family: inherit; font-size: 12px; color: var(--el-text-2);
 }
-.rl-clear-btn:hover { color: var(--el-high); border-color: var(--el-high); background: var(--el-high-bg); }
+.rl-clear-btn:hover { color: var(--el-high); border-color: var(--el-high); background: rgba(255,92,92,0.100); }
 .rl-clear-btn.hidden { display: none; }
 
 /* 两行筛选 chips */
@@ -408,17 +408,17 @@ mark:hover { filter: brightness(.97); }
 .rl-fchip {
   display: inline-flex; align-items: center; gap: 5px;
   padding: 4px 10px; border-radius: 999px; cursor: pointer;
-  border: 1px solid var(--el-line-2); background: #1c2438;
+  border: 1px solid rgba(200,214,235,0.180); background: #253250;
   font-family: inherit; font-size: 12px; color: var(--el-text-2);
 }
-.rl-fchip:hover { border-color: var(--el-blue); color: var(--el-blue); }
-/* 激活态取深靛蓝而非 Element 蓝：横向 chips 里蓝底白字太像默认组件库模样 */
-.rl-fchip.active { background: #0c111c; border-color: rgba(200,214,235,0.233); color: #f4f6f8; font-weight: 500; }
+.rl-fchip:hover { border-color: rgba(56,189,248,0.600); color: var(--el-blue); background: #2a3857; }
+/* 激活态用青蓝主色背景 + 青边框：横向 chips 里"被选中"必须一眼可辨 */
+.rl-fchip.active { background: rgba(56,189,248,0.130); border-color: rgba(56,189,248,0.500); color: #38bdf8; font-weight: 500; }
 .rl-fchip-n {
   padding: 0 5px; border-radius: 999px; font-size: 11px; line-height: 16px;
   background: var(--el-head); color: var(--el-text-3);
 }
-.rl-fchip.active .rl-fchip-n { background: rgba(28,36,56,0.220); color: #f4f6f8; }
+.rl-fchip.active .rl-fchip-n { background: rgba(28,36,56,0.350); color: #f4f6f8; }
 .rl-fdot { width: 6px; height: 6px; border-radius: 50%; flex: none; }
 .rl-fdot.high { background: var(--el-high); }
 .rl-fdot.medium { background: var(--el-med); }
