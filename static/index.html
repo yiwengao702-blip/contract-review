@@ -290,6 +290,43 @@
     </div>
   </div>
 
+  <!-- ============ 新增主体资质核验项弹窗 ============ -->
+  <div id="qualModal" class="modal-mask hidden">
+    <div class="modal modal-wide" role="dialog" aria-modal="true" aria-labelledby="qualModalTitle">
+      <div class="modal-head">
+        <span class="modal-icon">🛡</span>
+        <div>
+          <div class="modal-title" id="qualModalTitle">新增主体资质核验项</div>
+          <div class="modal-sub">保存后写入主体资质库，随「签约主体资格」规则在后续审查中即时生效</div>
+        </div>
+      </div>
+      <div class="modal-body">
+        <label class="field-label" for="qualName">核验项名称</label>
+        <input id="qualName" class="modal-input" placeholder="如：开户许可证核验" />
+        <label class="field-label" for="qualCategory">所属维度</label>
+        <select id="qualCategory" class="select modal-select">
+          <option value="主体资质">主体资质</option>
+        </select>
+        <label class="field-label" for="qualLevel">风险等级</label>
+        <select id="qualLevel" class="select modal-select">
+          <option value="high">高风险</option>
+          <option value="medium" selected>中风险</option>
+          <option value="low">低风险</option>
+        </select>
+        <label class="field-label" for="qualBasis">核验要点</label>
+        <textarea id="qualBasis" class="note modal-textarea"
+          placeholder="填写该资质项的核验口径或判定依据（如：比对合同主体与营业执照登记名称是否一致）"></textarea>
+        <label class="field-label" for="qualSource">数据来源</label>
+        <input id="qualSource" class="modal-input" placeholder="如：国家企业信用信息公示系统" />
+        <div class="field-hint" id="qualHint">编号由系统自动生成（PQ-00X），保存后可立即用于审查。</div>
+      </div>
+      <div class="modal-foot">
+        <button id="qualCancelBtn" class="btn ghost">取消</button>
+        <button id="qualOkBtn" class="btn primary">保存资质</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ============ 拍照 / 图片识别弹窗（支持多张照片 = 多页合同） ============ -->
   <div id="scanModal" class="modal-mask hidden">
     <div class="modal modal-scan" role="dialog" aria-modal="true" aria-labelledby="scanModalTitle">

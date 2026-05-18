@@ -345,7 +345,7 @@ mark:hover { filter: brightness(.97); }
 /* 不做 sticky 吸顶：顶栏已占 58px，筛选条自身约 110px，再吸顶就把大半屏压没了；
    而本页最多 13 张卡片，滚动范围有限，"改条件要回顶部"的代价远小于常驻占位。 */
 .rl-filterbar {
-  background: #1c2438; border: 1px solid var(--el-line); border-radius: 10px;
+  background: #18202f; border: 1px solid var(--el-line); border-radius: 10px;
   padding: 12px 14px; margin-bottom: 14px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.350);
 }
@@ -431,12 +431,13 @@ mark:hover { filter: brightness(.97); }
   align-items: start;
 }
 .rl-rc {
-  position: relative; background: #1c2438; cursor: pointer;
-  border: 1px solid var(--el-line); border-radius: 10px;
+  position: relative; background: #212b42; cursor: pointer;
+  border: 1px solid rgba(200,214,235,0.160); border-radius: 10px;
   /* 布局优化：内边距 13/15/12/17 → 14/16/13/18，卡片内部更从容不局促 */
   padding: 14px 16px 13px 18px;
   /* 左侧风险色条：一屏扫过去先看到等级分布，而不必逐行读"风险分级"列 */
   border-left: 4px solid var(--el-line-2);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.300);
   transition: box-shadow .15s, transform .15s;
 }
 /* hover 时顶边亮金：用 inset 阴影画一条 2px 金线，不挤占布局、不抖动；

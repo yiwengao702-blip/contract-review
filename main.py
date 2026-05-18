@@ -382,6 +382,45 @@ def add_clause(payload: dict):
     return {"ok": True, "key": key, "title": title, "category": category}
 
 
+@app.post("/api/rules/qualifications")
+def add_qualification(payload: dict):
+    """新增主体资质核验项，追加写入 party_qualification.yaml（保留原文件注释与顺序）。"""
+    name = str(payload.get("name") or "").strip()
+    category = str(payload.get("category") or "主体资质").strip()
+    level = str(payload.get("level") or "medium").strip()
+    basis = str(payload.get("basis") or "").strip()
+    source = str(payload.get("source") or "").strip()
+    if not name or not basis:
+        raise HTTPException(status_code=400, detail="核验项名称与核验要点不能为空")
+
+    # 自动生成下一个 PQ-00X 编号：避免与既有条目撞号
+    existing = _load_qualifications()
+    max_n = 0
+    for q in existing:
+        m = re.match(r"PQ-(\d+)", str(q.get("id") or ""))
+        if m:
+            max_n = max(max_n, int(m.group(1)))
+    qid = payload.get("id") or ("PQ-%03d" % (max_n + 1))
+    if any(str(q.get("id")) == qid for q in existing):
+        raise HTTPException(status_code=400, detail=f"资质编号已存在：{qid}")
+
+    # 以 YAML 序列化单个列表项，再整体缩进 2 空格续写到 checks: 之下
+    block = yaml.safe_dump(
+        [{"id": qid, "name": name, "category": category, "level": level,
+          "enabled": True, "basis": basis, "source": source}],
+        allow_unicode=True, default_flow_style=False, sort_keys=False,
+    )
+    indented = "\n".join(("  " + ln) if ln.strip() else ln
+                         for ln in block.rstrip("\n").split("\n"))
+    path = cfg.RULES_DIR / "party_qualification.yaml"
+    with open(path, "ab") as f:
+        f.write(("\n" + indented + "\n").encode("utf-8"))
+
+    # 重载规则引擎：新资质核验项随 RULE-ENT-001 在后续审查中即时生效
+    pipeline.rule_engine.reload()
+    return {"ok": True, "id": qid, "name": name, "category": category, "level": level}
+
+
 # ---------------------------------------------------------------------- #
 # 拍照 / 图片识别（OCR）
 # ---------------------------------------------------------------------- #

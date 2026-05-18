@@ -487,6 +487,7 @@ function exportMarkdown(t) {
 // 页面状态：
 //   tab  当前标签页；f 各分面当前选中项（键随标签页变化）；kw 搜索词；open 已展开的行键集合
 const RL_STATE = { data: null, tab: "rules", f: {}, kw: "", open: new Set() };
+applyAddBtnForTab(RL_STATE.tab);   // 初始：审查规则库标签下隐藏新增按钮
 
 // 风险等级中文与排序权重
 const LV_TEXT = { high: "高风险", medium: "中风险", low: "低风险" };
@@ -865,10 +866,27 @@ document.querySelectorAll("#rlTabs .rl-tab").forEach(btn => {
     RL_STATE.f = {};          // 分面键随标签页不同，切换时重置筛选
     RL_STATE.open.clear();
     document.querySelectorAll("#rlTabs .rl-tab").forEach(b => b.classList.toggle("active", b === btn));
+    applyAddBtnForTab(RL_STATE.tab);
     renderFilterBar();
     renderGrid();
   };
 });
+
+// 新增按钮随标签页切换身份：审查规则库在 YAML 维护（无表单），条款库 / 资质库各开对应弹窗
+function applyAddBtnForTab(tab) {
+  const addBtn = document.getElementById("rlAddBtn");
+  if (tab === "rules") {
+    addBtn.style.display = "none";
+  } else if (tab === "clauses") {
+    addBtn.style.display = "";
+    addBtn.textContent = "＋ 新增示范条款";
+    addBtn.onclick = openClauseModal;
+  } else {
+    addBtn.style.display = "";
+    addBtn.textContent = "＋ 新增主体资质";
+    addBtn.onclick = openQualModal;
+  }
+}
 
 // 搜索输入：只重渲染主区 + 统计（不重渲染 chips，避免输入时 chip 闪烁抢焦点）
 document.getElementById("rlSearch").oninput = (e) => {
@@ -939,6 +957,54 @@ document.addEventListener("keydown", (e) => {
   if (document.getElementById("clauseModal").classList.contains("hidden")) return;
   if (e.key === "Escape") closeClauseModal();
   if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) document.getElementById("clauseOkBtn").click();
+});
+
+// ---------------- 新增主体资质核验项弹窗 ----------------
+function openQualModal() {
+  document.getElementById("qualName").value = "";
+  document.getElementById("qualBasis").value = "";
+  document.getElementById("qualSource").value = "";
+  document.getElementById("qualLevel").value = "medium";
+  document.getElementById("qualModal").classList.remove("hidden");
+  document.getElementById("qualName").focus();
+}
+function closeQualModal() {
+  document.getElementById("qualModal").classList.add("hidden");
+}
+document.getElementById("qualCancelBtn").onclick = closeQualModal;
+document.getElementById("qualModal").onclick = (e) => {
+  if (e.target.id === "qualModal") closeQualModal();
+};
+document.getElementById("qualOkBtn").onclick = async () => {
+  const name = document.getElementById("qualName").value.trim();
+  const category = document.getElementById("qualCategory").value;
+  const level = document.getElementById("qualLevel").value;
+  const basis = document.getElementById("qualBasis").value.trim();
+  const source = document.getElementById("qualSource").value.trim();
+  if (!name || !basis) {
+    flashHint("核验项名称与核验要点不能为空。", "err");
+    return;
+  }
+  try {
+    const r = await fetch(API + "/api/rules/qualifications", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, category, level, basis, source }),
+    });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.detail || "保存失败");
+    closeQualModal();
+    document.querySelector('#rlTabs .rl-tab[data-tab="quals"]').click();
+    await loadRules();
+    flashHint(`已新增主体资质「${j.name}」（${j.id}），后续审查即时生效。`, "ok");
+  } catch (err) {
+    flashHint("保存失败：" + err.message, "err");
+  }
+};
+// Esc 关闭 / Ctrl+Enter 保存（资质弹窗）
+document.addEventListener("keydown", (e) => {
+  if (document.getElementById("qualModal").classList.contains("hidden")) return;
+  if (e.key === "Escape") closeQualModal();
+  if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) document.getElementById("qualOkBtn").click();
 });
 
 // ---------------- 拍照 / 图片识别（支持多张照片 = 多页合同） ----------------
