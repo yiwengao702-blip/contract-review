@@ -20,7 +20,21 @@ const API = "";
         }
       }
     } catch (e) {}
-    return _origFetch(input, init);
+    // [安全加固 Phase0+] 401 兜底：后端会话为纯内存态，服务重启会清空所有令牌。
+    // 此时前端 localStorage 里残留的旧 token 已失效，若不加处理，所有受保护接口返回
+    // 401，loadRules 等取数失败，页面会静默渲染为空（即用户报的“加载不出来条款”）。
+    // 这里统一拦截 401：清除失效会话并跳回登录页，让用户重新获取令牌。
+    return _origFetch(input, init).then(function (resp) {
+      if (resp && resp.status === 401) {
+        try { localStorage.removeItem("cr_session"); } catch (e) {}
+        var path = (typeof location !== "undefined" && location.pathname) || "";
+        // 已在登录页或正在调用登录接口时，不重复跳转，避免死循环 / 干扰登录报错。
+        if (path !== "/login" && !/^\/api\/auth\//.test(String(input))) {
+          location.replace("/login");
+        }
+      }
+      return resp;
+    });
   };
 })();
 
