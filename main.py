@@ -250,17 +250,24 @@ def do_logout(request: Request):
     return {"ok": True}
 
 
+# 角色白名单：自助注册仅允许在三个已知角色中选择，杜绝越权自定义角色
+ROLE_NAMES = {"admin": "平台管理员", "legal": "法务合规经理", "biz": "采购业务经办"}
+
+
 @app.post("/api/register")
 def do_register(payload: dict):
     """自助注册：新建账号并写入持久化用户表，注册成功即签发会话自动登录。
 
-    出于演示环境安全考虑，自助注册账号默认角色为「采购业务经办」（最小权限，
-    仅上传合同与查看审查结果），不开放 admin / legal 的管理能力。
-    真实生产应走企业统一身份注册，并叠加邮箱验证码 / 管理员审批等强校验。
+    角色由注册表单的「角色下拉框」选择，后端按白名单校验：非法或缺失一律回落为
+    最小权限的「采购业务经办」。演示环境明文存储口令，生产应接企业统一身份并哈希。
     """
     account = str(payload.get("account") or "").strip().lower()
     password = str(payload.get("password") or "")
     display_name = str(payload.get("display_name") or "").strip()
+    # 角色取白名单内的值，越界则回落 biz（最小权限），避免前端篡改越权
+    role = str(payload.get("role") or "biz").strip().lower()
+    if role not in ROLE_NAMES:
+        role = "biz"
 
     # 基础校验：邮箱格式、密码强度、姓名非空
     if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", account):
@@ -276,8 +283,8 @@ def do_register(payload: dict):
             raise HTTPException(status_code=409, detail="该邮箱已注册，请直接登录")
         info = {
             "password": password,
-            "role": "biz",
-            "role_name": "采购业务经办",
+            "role": role,
+            "role_name": ROLE_NAMES[role],
             "display_name": display_name,
         }
         _save_registered_user(account, info)

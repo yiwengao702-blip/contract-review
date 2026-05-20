@@ -959,6 +959,15 @@ mark:hover { filter: brightness(.97); }
 .login-field:focus-within { border-color: var(--primary); background: #1c2438; box-shadow: 0 0 0 3px rgba(0,0,0,0.600); }
 .login-field .f-ico { color: #acb7c8; display: flex; }
 .login-field input { flex: 1; border: 0; outline: 0; background: transparent; padding: 12px 10px; font-size: 14px; color: var(--text); }
+/* 注册角色下拉框：与输入框同款暗色处理，自定义下拉箭头（原生 popup 由系统绘制） */
+.login-field select {
+  flex: 1; border: 0; outline: 0; background-color: transparent;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23acb7c8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 10px center;
+  padding: 12px 30px 12px 10px; font-size: 14px; color: var(--text); cursor: pointer;
+  -webkit-appearance: none; appearance: none;
+}
+.login-field select option { background: #1b2336; color: var(--text); }
 .login-field .f-eye { cursor: pointer; color: #acb7c8; display: flex; user-select: none; }
 .login-field .f-eye:hover { color: var(--primary); }
 .login-error { color: var(--high); font-size: 12.5px; min-height: 18px; margin: 0 0 8px; }

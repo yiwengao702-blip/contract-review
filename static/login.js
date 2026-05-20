@@ -92,6 +92,7 @@ async function doLogin() {
 async function doRegister() {
   const account = document.getElementById("regAccount").value.trim();
   const display_name = document.getElementById("regName").value.trim();
+  const role = document.getElementById("regRole").value || "biz";
   const password = document.getElementById("regPassword").value;
   const confirm = document.getElementById("regConfirm").value;
   const errBox = document.getElementById("regError");
@@ -112,7 +113,7 @@ async function doRegister() {
     const r = await fetch(API + "/api/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ account, display_name, password }),
+      body: JSON.stringify({ account, display_name, password, role }),
     });
     if (!r.ok) {
       const j = await r.json().catch(() => ({}));
