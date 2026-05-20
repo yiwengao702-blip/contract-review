@@ -976,15 +976,21 @@ mark:hover { filter: brightness(.97); }
 /* 登录主按钮悬停：金辉叠加，与全站金色强调一致 */
 .login-btn:hover { filter: brightness(1.12); box-shadow: inset 0 1px 0 rgba(0,0,0,0.600), 0 4px 16px rgba(0,0,0,0.600); }
 .login-btn:disabled { opacity: .68; cursor: default; }
-/* 在线演示按钮：与登录主按钮同型，但用描边幽灵样式做视觉区分，突出"免登录体验" */
-.login-demo-btn {
-  background: transparent; color: var(--primary);
-  border: 1.5px solid rgba(200,214,235,0.233); box-shadow: none;
-  letter-spacing: 2px; text-indent: 2px; margin-top: 4px;
+/* 登录 / 注册 切换标签：贴卡片顶部的两段式切换 */
+.login-tabs { display: flex; gap: 6px; margin: 16px 0 4px; background: #161d2e; border: 1px solid rgba(200,214,235,0.120); border-radius: 4px; padding: 4px; }
+.ltab {
+  flex: 1; border: 0; background: transparent; color: #acb7c8; cursor: pointer;
+  font-size: 13.5px; font-weight: 600; letter-spacing: 1px; padding: 9px 0; border-radius: 3px;
+  transition: background .15s, color .15s;
 }
-.login-demo-btn:hover { background: rgba(12,17,28,0.060); border-color: var(--primary); box-shadow: 0 2px 10px rgba(0,0,0,0.600); }
-.login-demo-btn svg { vertical-align: -3px; margin-right: 4px; }
-.login-demo-hint { margin: 9px 0 2px; text-align: center; font-size: 12px; color: var(--el-text-3); }
+.ltab:hover { color: #e3e9f1; }
+.ltab.active { background: #1c2438; color: var(--text); box-shadow: inset 0 0 0 1px rgba(200,214,235,0.183); }
+.login-view { margin-top: 6px; }
+.login-view.hidden { display: none !important; }
+/* 视图底部切换链接（去注册 / 返回登录） */
+.login-switch { margin: 14px 0 0; text-align: center; font-size: 12.5px; color: var(--muted); }
+.login-switch a { color: var(--primary); text-decoration: none; font-weight: 600; }
+.login-switch a:hover { text-decoration: underline; }
 
 /* 演示账号区：加顶部细线做分区，更像正式系统的凭据表 */
 .demo-head { display: flex; justify-content: space-between; align-items: center; margin: 24px 0 10px; padding-top: 18px; border-top: 1px solid var(--line); font-size: 12.5px; color: #b7c2d1; }

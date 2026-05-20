@@ -86,50 +86,80 @@
       </div>
     </aside>
 
-    <!-- ============ 右侧：登录卡 ============ -->
+    <!-- ============ 右侧：登录 / 注册卡 ============ -->
     <main class="login-panel">
-      <form class="login-card" id="loginForm" autocomplete="off">
+      <form class="login-card" id="authForm" autocomplete="off">
         <div class="card-head">
-          <h2 class="login-card-title">账号登录</h2>
+          <h2 class="login-card-title" id="cardTitle">账号登录</h2>
           <span class="secure-badge">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
             安全登录
           </span>
         </div>
-        <p class="login-card-sub">请使用演示账号（企业邮箱）登录，三种角色权限不同</p>
 
-        <div class="login-field">
-          <span class="f-ico">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 12 0v1"/></svg>
-          </span>
-          <input id="account" type="email" spellcheck="false" placeholder="企业邮箱" />
+        <!-- 登录 / 注册 切换标签 -->
+        <div class="login-tabs" id="loginTabs">
+          <button type="button" class="ltab active" data-view="login">账号登录</button>
+          <button type="button" class="ltab" data-view="register">注册账号</button>
         </div>
 
-        <div class="login-field">
-          <span class="f-ico">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
-          </span>
-          <input id="password" type="password" placeholder="密码" />
-          <span class="f-eye" id="togglePwd" title="显示 / 隐藏密码">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
-          </span>
+        <!-- 登录视图 -->
+        <div class="login-view" id="loginView">
+          <p class="login-card-sub">请使用企业邮箱登录，三种角色权限不同</p>
+          <div class="login-field">
+            <span class="f-ico">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 12 0v1"/></svg>
+            </span>
+            <input id="account" type="email" spellcheck="false" placeholder="企业邮箱" />
+          </div>
+          <div class="login-field">
+            <span class="f-ico">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+            </span>
+            <input id="password" type="password" placeholder="密码" />
+            <span class="f-eye" id="togglePwd" title="显示 / 隐藏密码">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+            </span>
+          </div>
+          <div class="login-error" id="loginError"></div>
+          <button type="submit" class="login-btn" id="loginBtn">登 录</button>
+          <p class="login-switch">还没有账号？<a href="#" id="toRegister">立即注册</a></p>
         </div>
 
-        <div class="login-error" id="loginError"></div>
-        <button type="submit" class="login-btn" id="loginBtn">登 录</button>
-
-        <!-- 在线演示：一键免登录进入，便于访客快速体验全部功能 -->
-        <button type="button" class="login-btn login-demo-btn" id="demoEnterBtn">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l14 9-14 9V3z"/></svg>
-          在线演示 · 免登录体验
-        </button>
-        <p class="login-demo-hint">将以「法务合规经理」演示账号直接进入，无需输入密码</p>
-
-        <div class="demo-head">
-          <span>演示账号（点击自动填充）</span>
-          <span class="demo-tag">统一密码见下</span>
+        <!-- 注册视图 -->
+        <div class="login-view hidden" id="registerView">
+          <p class="login-card-sub">注册新账号，默认角色为「采购业务经办」</p>
+          <div class="login-field">
+            <span class="f-ico">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 12 0v1"/></svg>
+            </span>
+            <input id="regAccount" type="email" spellcheck="false" placeholder="企业邮箱" />
+          </div>
+          <div class="login-field">
+            <span class="f-ico">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </span>
+            <input id="regName" type="text" spellcheck="false" placeholder="姓名" />
+          </div>
+          <div class="login-field">
+            <span class="f-ico">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+            </span>
+            <input id="regPassword" type="password" placeholder="密码（至少 6 位）" />
+            <span class="f-eye" id="toggleRegPwd" title="显示 / 隐藏密码">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+            </span>
+          </div>
+          <div class="login-field">
+            <span class="f-ico">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+            </span>
+            <input id="regConfirm" type="password" placeholder="确认密码" />
+          </div>
+          <div class="login-error" id="regError"></div>
+          <button type="submit" class="login-btn" id="regBtn">注 册</button>
+          <p class="login-switch">已有账号？<a href="#" id="toLogin">返回登录</a></p>
         </div>
-        <div class="demo-list" id="demoList"></div>
       </form>
     </main>
   </div>

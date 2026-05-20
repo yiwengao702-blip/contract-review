@@ -1,46 +1,58 @@
 // 文件位置: contract-review/static/login.js
-// 功能说明: 登录页逻辑。演示账号点击自动填充、密码显隐、提交登录并写入本地会话。
-//          登录成功后跳转主应用；未登录访问主应用会被守卫重定向回本页。
+// 功能说明: 登录 / 注册页逻辑。同一张卡片支持「账号登录」与「自助注册」两个视图，
+//          登录成功或注册成功均写入本地会话并进入主应用；未登录访问主应用会被守卫重定向回本页。
 const API = "";
 const SESSION_KEY = "cr_session";
 
-// 演示账号（与后端 DEMO_ACCOUNTS 保持一致，仅用于前端列表展示与一键填充）
-const DEMO_ACCOUNTS = [
-  { account: "chenjingzhi@gmail.com",  password: "chenjingzhi",  role: "平台管理员",   name: "陈敬之" },
-  { account: "zhoumingyuan@gmail.com", password: "zhoumingyuan", role: "法务合规经理", name: "周明远" },
-  { account: "lisiqi@gmail.com",       password: "lisiqi",       role: "采购业务经办", name: "李思齐" },
-];
+// 当前视图：login / register
+let authView = "login";
 
-// 渲染演示账号列表（点击行自动填充账号密码）
-function renderDemo() {
-  const box = document.getElementById("demoList");
-  box.innerHTML = DEMO_ACCOUNTS.map(a => `
-    <div class="demo-row" data-account="${a.account}">
-      <div>
-        <span class="demo-role">${a.role}</span>
-        <span class="demo-name">${a.name}</span>
-      </div>
-      <div class="demo-cred">${a.account}<br />${a.password}</div>
-    </div>`).join("");
-  box.querySelectorAll(".demo-row").forEach(row => {
-    row.onclick = () => {
-      const hit = DEMO_ACCOUNTS.find(a => a.account === row.dataset.account);
-      document.getElementById("account").value = hit.account;
-      document.getElementById("password").value = hit.password;
-      document.getElementById("loginError").textContent = "";
-    };
+// 切换登录 / 注册视图（同步标签高亮、标题与两处错误提示）
+function showView(view) {
+  authView = view;
+  const isLogin = view === "login";
+  document.getElementById("loginView").classList.toggle("hidden", !isLogin);
+  document.getElementById("registerView").classList.toggle("hidden", isLogin);
+  document.querySelectorAll("#loginTabs .ltab").forEach(b => {
+    b.classList.toggle("active", b.dataset.view === view);
   });
+  document.getElementById("cardTitle").textContent = isLogin ? "账号登录" : "注册账号";
+  document.getElementById("loginError").textContent = "";
+  document.getElementById("regError").textContent = "";
 }
 
-// 密码显隐切换
+// 标签栏 + 底部链接切换视图
+document.querySelectorAll("#loginTabs .ltab").forEach(b => {
+  b.onclick = () => showView(b.dataset.view);
+});
+document.getElementById("toRegister").onclick = (e) => { e.preventDefault(); showView("register"); };
+document.getElementById("toLogin").onclick = (e) => { e.preventDefault(); showView("login"); };
+
+// 密码显隐切换（登录 / 注册各一个）
 document.getElementById("togglePwd").onclick = () => {
   const p = document.getElementById("password");
   p.type = p.type === "password" ? "text" : "password";
 };
+document.getElementById("toggleRegPwd").onclick = () => {
+  const p = document.getElementById("regPassword");
+  p.type = p.type === "password" ? "text" : "password";
+};
 
-// 提交登录
-document.getElementById("loginForm").onsubmit = async (e) => {
+// 写入会话并进入主应用（登录与注册共用）
+function enterApp(data, next) {
+  localStorage.setItem(SESSION_KEY, JSON.stringify(data));
+  location.replace(next && next.startsWith("/") ? next : "/");
+}
+
+// 表单提交：按当前视图分流到登录或注册
+document.getElementById("authForm").onsubmit = async (e) => {
   e.preventDefault();
+  if (authView === "login") return doLogin();
+  return doRegister();
+};
+
+// 账号登录
+async function doLogin() {
   const account = document.getElementById("account").value.trim();
   const password = document.getElementById("password").value;
   const errBox = document.getElementById("loginError");
@@ -65,18 +77,57 @@ document.getElementById("loginForm").onsubmit = async (e) => {
       return;
     }
     const data = await r.json();
-    localStorage.setItem(SESSION_KEY, JSON.stringify(data));
     // 支持 ?next=/risk 形式的回跳（风控子系统从登录页返回原位）
     const params = new URLSearchParams(location.search);
-    const next = params.get("next");
-    location.replace(next && next.startsWith("/") ? next : "/");
+    enterApp(data, params.get("next"));
   } catch (err) {
     errBox.textContent = "网络异常，请稍后重试";
   } finally {
     btn.disabled = false;
     btn.textContent = "登 录";
   }
-};
+}
+
+// 自助注册（成功即自动登录）
+async function doRegister() {
+  const account = document.getElementById("regAccount").value.trim();
+  const display_name = document.getElementById("regName").value.trim();
+  const password = document.getElementById("regPassword").value;
+  const confirm = document.getElementById("regConfirm").value;
+  const errBox = document.getElementById("regError");
+  const btn = document.getElementById("regBtn");
+
+  errBox.textContent = "";
+  if (!account || !display_name || !password || !confirm) {
+    errBox.textContent = "请完整填写注册信息";
+    return;
+  }
+  if (password !== confirm) {
+    errBox.textContent = "两次输入的密码不一致";
+    return;
+  }
+  btn.disabled = true;
+  btn.textContent = "注册中…";
+  try {
+    const r = await fetch(API + "/api/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ account, display_name, password }),
+    });
+    if (!r.ok) {
+      const j = await r.json().catch(() => ({}));
+      errBox.textContent = j.detail || "注册失败，请稍后重试";
+      return;
+    }
+    const data = await r.json();
+    enterApp(data, null);
+  } catch (err) {
+    errBox.textContent = "网络异常，请稍后重试";
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "注 册";
+  }
+}
 
 // 已登录则直接进入主应用，避免重复登录
 (function autoSkip() {
@@ -84,35 +135,3 @@ document.getElementById("loginForm").onsubmit = async (e) => {
     if (JSON.parse(localStorage.getItem(SESSION_KEY) || "null")) location.replace("/");
   } catch (e) { /* 忽略 */ }
 })();
-
-// 在线演示：一键以演示账号免登录进入（默认「法务合规经理」，可完整体验审查与规则库）
-document.getElementById("demoEnterBtn").onclick = async () => {
-  const demo = DEMO_ACCOUNTS[1] || DEMO_ACCOUNTS[0]; // 法务合规经理
-  const errBox = document.getElementById("loginError");
-  const btn = document.getElementById("demoEnterBtn");
-  errBox.textContent = "";
-  btn.disabled = true;
-  btn.textContent = "演示环境加载中…";
-  try {
-    const r = await fetch(API + "/api/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ account: demo.account, password: demo.password }),
-    });
-    if (!r.ok) {
-      const j = await r.json().catch(() => ({}));
-      errBox.textContent = j.detail || "演示登录失败，请稍后重试";
-      return;
-    }
-    const data = await r.json();
-    localStorage.setItem(SESSION_KEY, JSON.stringify(data));
-    location.replace("/");
-  } catch (err) {
-    errBox.textContent = "网络异常，请稍后重试";
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l14 9-14 9V3z"/></svg> 在线演示 · 免登录体验';
-  }
-};
-
-renderDemo();

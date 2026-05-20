@@ -17,6 +17,8 @@ __pycache__/
 data/uploads/
 # 运行时状态目录
 data/risk_state/
+# 自助注册用户持久化文件（运行时生成，含账号明文，非源码）
+data/users.json
 
 # ===== 日志 =====
 *.log

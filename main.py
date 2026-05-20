@@ -119,7 +119,7 @@ _session_store = sa_sessions.SessionStore()
 app.add_middleware(
     PathAuthMiddleware,
     protected_prefixes=("/api/",),
-    public_paths={"/", "/index.html", "/login", "/login.html", "/api/login", "/static/", "/risk", "/risk.html"},
+    public_paths={"/", "/index.html", "/login", "/login.html", "/api/login", "/api/register", "/static/", "/risk", "/risk.html"},
     sessions=_session_store,  # 与 do_login 签发使用同一存储，否则令牌校验对不上
 )
 
@@ -174,6 +174,40 @@ DEMO_ACCOUNTS = {
     "lisiqi@gmail.com":       {"password": "lisiqi",       "role": "biz",   "role_name": "采购业务经办", "display_name": "李思齐"},
 }
 
+# 自助注册用户持久化文件（演示环境用，明文存储仅作离线演示；生产应接入企业统一身份并哈希口令）。
+# 与 DEMO_ACCOUNTS 合并构成完整账号表；注册账号默认最小权限角色「采购业务经办」。
+REGISTERED_USERS_FILE = Path(__file__).resolve().parent / "data" / "users.json"
+# 用可重入锁：do_register 在持有锁的上下文内调用 _save_registered_user，需允许同一线程重复加锁，
+# 否则会自死锁（普通 threading.Lock 不可重入）导致注册请求永久挂起。
+_REGISTERED_LOCK = threading.RLock()
+
+
+def _load_registered_users() -> dict:
+    if not REGISTERED_USERS_FILE.exists():
+        return {}
+    try:
+        with open(REGISTERED_USERS_FILE, "r", encoding="utf-8") as f:
+            return json.load(f) or {}
+    except (json.JSONDecodeError, OSError):
+        return {}
+
+
+def _save_registered_user(account: str, info: dict) -> None:
+    with _REGISTERED_LOCK:
+        users = _load_registered_users()
+        users[account] = info
+        REGISTERED_USERS_FILE.parent.mkdir(parents=True, exist_ok=True)
+        with open(REGISTERED_USERS_FILE, "w", encoding="utf-8") as f:
+            json.dump(users, f, ensure_ascii=False, indent=2)
+
+
+def find_user(account: str) -> dict | None:
+    """在演示账号表与已注册用户表中查找账号（邮箱统一小写匹配）。"""
+    account = str(account or "").strip().lower()
+    if account in DEMO_ACCOUNTS:
+        return DEMO_ACCOUNTS[account]
+    return _load_registered_users().get(account)
+
 
 @app.get("/login")
 def login_page():
@@ -191,7 +225,7 @@ def do_login(payload: dict):
     account = str(payload.get("account") or "").strip().lower()
     # 密码去掉首尾空白：演示时从演示账号行复制粘贴容易带空格
     password = str(payload.get("password") or "").strip()
-    user = DEMO_ACCOUNTS.get(account)
+    user = find_user(account)
     if not user or user["password"] != password:
         raise HTTPException(status_code=401, detail="邮箱或密码错误")
     # [融合] 经共享会话存储签发令牌，替代原手写 SESSIONS 字典
@@ -214,6 +248,51 @@ def do_logout(request: Request):
     token = auth[7:].strip() if auth.lower().startswith("bearer ") else request.query_params.get("token", "")
     _session_store.revoke(token or "")
     return {"ok": True}
+
+
+@app.post("/api/register")
+def do_register(payload: dict):
+    """自助注册：新建账号并写入持久化用户表，注册成功即签发会话自动登录。
+
+    出于演示环境安全考虑，自助注册账号默认角色为「采购业务经办」（最小权限，
+    仅上传合同与查看审查结果），不开放 admin / legal 的管理能力。
+    真实生产应走企业统一身份注册，并叠加邮箱验证码 / 管理员审批等强校验。
+    """
+    account = str(payload.get("account") or "").strip().lower()
+    password = str(payload.get("password") or "")
+    display_name = str(payload.get("display_name") or "").strip()
+
+    # 基础校验：邮箱格式、密码强度、姓名非空
+    if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", account):
+        raise HTTPException(status_code=400, detail="请输入有效的企业邮箱")
+    if len(password) < 6:
+        raise HTTPException(status_code=400, detail="密码至少 6 位")
+    if not display_name:
+        raise HTTPException(status_code=400, detail="请填写姓名")
+
+    with _REGISTERED_LOCK:
+        # 双重检查：演示账号与已注册用户均不允许重复注册
+        if account in DEMO_ACCOUNTS or account in _load_registered_users():
+            raise HTTPException(status_code=409, detail="该邮箱已注册，请直接登录")
+        info = {
+            "password": password,
+            "role": "biz",
+            "role_name": "采购业务经办",
+            "display_name": display_name,
+        }
+        _save_registered_user(account, info)
+
+    # 注册成功直接签发令牌，前端可像登录一样写入会话并进入主应用
+    sess = _session_store.issue(account, info["role"], ttl=3600)
+    token = sess.token
+    return {
+        "ok": True,
+        "token": token,
+        "account": account,
+        "role": info["role"],
+        "role_name": info["role_name"],
+        "display_name": info["display_name"],
+    }
 
 
 @app.get("/api/files/{task_id}")
