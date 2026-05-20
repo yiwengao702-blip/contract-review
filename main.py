@@ -59,6 +59,132 @@ app = FastAPI(title="合同审批审查系统", version="1.0.0")
 # 合同审查 + 电商风控同属一个项目，统一挂载在同一服务下
 app.include_router(risk_router)
 pipeline = ReviewPipeline()
+
+
+# ---------------------------------------------------------------------- #
+# 演示种子数据：启动时注入一批虚拟审查任务，让大盘统计卡/筛选器/列表开箱即有内容
+# ---------------------------------------------------------------------- #
+def _seed_demo_tasks() -> None:
+    """向流水线注入虚拟审查任务（仅内存，重启即按此重建）。
+
+    设计约束：
+    - 覆盖不同业务类型 / 金额量级 / 风险等级，统计卡四项都有非零数据可看；
+    - 完成态任务的 updated_at 取近几小时，保证「本周审结」按周统计恒有值；
+    - 只种 completed / pending，绝不种 blocked——失败外发扫描只认 blocked，
+      种了会污染导出审核队列，干扰自检断言。
+    """
+    from core.models import (
+        ContractMeta, ReviewReport, ReviewTask, RiskFinding,
+        RiskLevel, TaskStatus, WritebackStatus,
+    )
+
+    def _ago(hours: float) -> str:
+        """生成「几小时前」的时间串：种子数据统一落在近两天内。"""
+        return time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(time.time() - hours * 3600))
+
+    def _finding(fid: str, level: RiskLevel, category: str, quote: str,
+                 reason: str, basis: str, rec: str = "") -> RiskFinding:
+        """构造一条风险发现（规则来源，演示用）。"""
+        return RiskFinding(finding_id=fid, level=level, category=category, quote=quote,
+                           reason=reason, legal_basis=basis, recommendation=rec, source="rule")
+
+    def _task(idx: int, filename: str, ctype: str, hours: float, level: RiskLevel,
+              summary: str, findings: list, amount=None, party_a="", party_b="",
+              status: TaskStatus = TaskStatus.COMPLETED) -> ReviewTask:
+        """构造一条虚拟任务：完成态带报告与风险清单，pending 态不带报告。"""
+        now = _ago(hours)
+        t = ReviewTask(
+            task_id=f"TDEMO{idx:04d}",
+            filename=filename,
+            contract_type=ctype,
+            status=status,
+            writeback_status=WritebackStatus.NOT_WRITTEN,
+            created_at=now,
+            updated_at=now,
+            contract_no=f"HT-2026-{idx:04d}",
+            applicant_dept=["采购部", "技术部", "行政部", "市场部"][idx % 4],
+            applicant=["李思齐", "周明远", "王芳", "赵磊"][idx % 4],
+        )
+        if status is TaskStatus.COMPLETED:
+            t.meta = ContractMeta(party_a=party_a, party_b=party_b, amount=amount,
+                                  currency="元", duration="12 个月")
+            t.report = ReviewReport(contract_name=filename.rsplit(".", 1)[0],
+                                    contract_type=ctype, overall_level=level,
+                                    summary=summary, findings=findings)
+        return t
+
+    seeds = [
+        _task(1, "城市轨道交通设备采购合同.docx", "采购", 2.5, RiskLevel.MEDIUM,
+              "付款节奏与交付节奏基本匹配，但预付款比例偏高且缺乏预付款担保，建议补充。",
+              [_finding("F1-1", RiskLevel.MEDIUM, "付款条件",
+                        "合同签订后 10 日内支付预付款 40%",
+                        "预付款比例达 40% 且未约定担保，资金占用与回收风险偏高",
+                        "《民法典》第五百八十六条", "预付款降至 30% 并要求等额银行保函"),
+               _finding("F1-2", RiskLevel.LOW, "违约责任",
+                        "逾期交付的，每日按合同总额 0.05% 支付违约金",
+                        "违约金上限未约定封顶值", "《民法典》第五百八十五条",
+                        "补充「违约金累计不超过合同总额 10%」")],
+              amount=12800000, party_a="中恒建设集团有限公司", party_b="华轨装备制造股份有限公司"),
+        _task(2, "软件开发服务合同.docx", "服务", 6.0, RiskLevel.HIGH,
+              "成果知识产权归属未作约定，且验收标准模糊，属本单最高风险项。",
+              [_finding("F2-1", RiskLevel.HIGH, "知识产权",
+                        "开发成果的知识产权归属双方另行协商",
+                        "知识产权归属悬而未决，交付后易衍生权属纠纷",
+                        "《民法典》第八百四十三条", "明确约定开发成果知识产权归甲方所有"),
+               _finding("F2-2", RiskLevel.MEDIUM, "保密义务",
+                        "双方对合作中知悉的信息负有保密义务",
+                        "保密义务未约定期限与违约责任", "《民法典》第五百零一条",
+                        "约定保密期限为合同终止后 5 年并单列违约金"),
+               _finding("F2-3", RiskLevel.LOW, "条款完整性",
+                        "缺少必备条款：验收标准",
+                        "验收标准未量化，付款节点难以对齐", "",
+                        "补充按模块验收清单与验收期")],
+              amount=3560000, party_a="蓝湾数据科技有限公司", party_b="云梯软件开发有限公司"),
+        _task(3, "厂房租赁合同.pdf", "租赁", 26.0, RiskLevel.LOW,
+              "租赁要素齐备，仅免责任条款表述笼统，整体风险可控。",
+              [_finding("F3-1", RiskLevel.LOW, "免责条款",
+                        "因不可抗力造成损失的，双方互不承担责任",
+                        "免责范围未列举具体情形，执行口径易起争议",
+                        "《民法典》第一百八十条", "列举地震/洪水等具体免责任情形")],
+              amount=920000, party_a="启润实业发展有限公司", party_b="恒力精密制造有限公司"),
+        _task(4, "市场营销推广服务协议.docx", "服务", 49.0, RiskLevel.HIGH,
+              "违约金比例明显过高（35%），且约定管辖对己方不利，需法务重点跟进。",
+              [_finding("F4-1", RiskLevel.HIGH, "违约责任",
+                        "违约金比例为合同总额的 35%",
+                        "违约金畸高，司法实践中可能被调整，且对等性缺失",
+                        "《民法典》第五百八十五条", "降至 20% 以内并设置双向对等"),
+               _finding("F4-2", RiskLevel.MEDIUM, "争议管辖",
+                        "争议由乙方所在地人民法院管辖",
+                        "管辖地对己方不利", "《民事诉讼法》第三十五条",
+                        "改为原告所在地或合同签订地管辖")],
+              amount=2400000, party_a="星野传媒集团有限公司", party_b="卓航广告有限公司"),
+        _task(5, "生产设备维保框架合同.docx", "采购", 53.0, RiskLevel.MEDIUM,
+              "账期 120 天偏长，且相对方资质核验项缺失，建议签约前补齐。",
+              [_finding("F5-1", RiskLevel.MEDIUM, "付款条件",
+                        "验收合格后 120 日内一次性支付",
+                        "账期超 90 天，占压供应商资金，易引发履约摩擦",
+                        "《保障中小企业款项支付条例》第八条", "账期缩短至 60 日"),
+               _finding("F5-2", RiskLevel.MEDIUM, "主体资质",
+                        "缺失字段：credit_code",
+                        "乙方统一社会信用代码未披露，主体核验不完整",
+                        "《公司法》第三十二条", "签约前核验并写入合同首部")],
+              amount=6880000, party_a="北方重工集团有限公司", party_b="迅捷机电设备工程有限公司"),
+        _task(6, "跨省物流运输合同.pdf", "物流", 70.0, RiskLevel.LOW,
+              "运输要素完整，货物保险与赔偿上限已约定，风险可控。",
+              [_finding("F6-1", RiskLevel.LOW, "保险条款",
+                        "货物灭失按每公斤 30 元限额赔偿",
+                        "赔偿限额低于货物实际价值，建议按声明价值投保",
+                        "《民法典》第八百三十三条", "改为按声明价值全额赔付")],
+              amount=1350000, party_a="中远联运物流有限公司", party_b="顺捷货运代理有限公司"),
+        # 一条待审任务：让「待审任务」统计卡有数；pending 不带报告，列表综合风险显示 —
+        _task(7, "数据服务框架协议.docx", "服务", 0.5, RiskLevel.LOW,
+              "", [], status=TaskStatus.PENDING),
+    ]
+    for t in seeds:
+        pipeline._tasks[t.task_id] = t
+
+
+_seed_demo_tasks()
 # 审计中心：台账 / 相对方画像 / 风险洞察 / 黑名单。
 # 传入 list_tasks 而非任务副本——它必须从流水线读当前任务，否则统计会停在启动那一刻。
 audit_center = AuditCenter(task_provider=pipeline.list_tasks)
