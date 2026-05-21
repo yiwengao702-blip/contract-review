@@ -268,31 +268,201 @@ function renderStats(rows) {
     </div>`).join("");
 }
 
-async function loadTasks() {
-  const rows = await (await fetch(API + "/api/tasks")).json();
-  renderStats(rows);
+// —— 分析区：与清单刻意采用不同视觉语言（这里是"读图"，清单是"查明细"）——
+
+// 风险等级分布：环形占比 + 图例。用 conic-gradient 纯 CSS 画环，不引图表库。
+// 只统计"已出综合风险"的任务，未完成/无报告的任务不计入——否则环里混入"未知"，占比失去意义。
+function renderRiskDonut(rows) {
+  const done = rows.filter(t => t.report && t.report.overall_level);
+  const order = [
+    { key: "high", label: "高风险", color: "var(--high)" },
+    { key: "medium", label: "中风险", color: "var(--medium)" },
+    { key: "low", label: "低风险", color: "var(--low)" },
+  ];
+  const counts = order.map(o => ({ ...o, n: done.filter(t => t.report.overall_level === o.key).length }));
+  const total = counts.reduce((a, c) => a + c.n, 0);
+  // 依次累加画扇形；total=0 时给一圈中性灰，避免空的 conic-gradient
+  let acc = 0;
+  const stops = [];
+  for (const c of counts) {
+    if (!c.n || !total) continue;
+    const from = (acc / total) * 360, to = ((acc + c.n) / total) * 360;
+    stops.push(`${c.color} ${from}deg ${to}deg`);
+    acc += c.n;
+  }
+  const el = document.getElementById("riskDonut");
+  if (el) el.style.background = total
+    ? `conic-gradient(${stops.join(", ")})`
+    : "conic-gradient(#2a3550 0deg 360deg)";
+  const tot = document.getElementById("donutTotal");
+  if (tot) tot.textContent = total;
+  const legend = document.getElementById("riskLegend");
+  if (legend) legend.innerHTML = counts.map(c => {
+    const pct = total ? Math.round((c.n / total) * 100) : 0;
+    return `<li class="donut-legend-item">
+      <span class="dl-dot" style="background:${c.color}"></span>
+      <span class="dl-label">${c.label}</span>
+      <span class="dl-val">${c.n}</span>
+      <span class="dl-pct">${pct}%</span>
+    </li>`;
+  }).join("");
+}
+
+// 业务类型分布：横向条形。条长按当前最大计数归一，一眼看出"哪类合同最多"。
+function renderBizBars(rows) {
+  const map = new Map();
+  for (const t of rows) {
+    const k = t.contract_type || "未分类";
+    map.set(k, (map.get(k) || 0) + 1);
+  }
+  const list = [...map.entries()].sort((a, b) => b[1] - a[1]);
+  const max = list.length ? list[0][1] : 0;
+  const box = document.getElementById("bizBars");
+  if (!box) return;
+  if (!list.length) { box.innerHTML = `<div class="dash-empty">暂无数据</div>`; return; }
+  box.innerHTML = list.map(([k, n]) => `
+    <div class="biz-bar-row">
+      <span class="biz-bar-name" title="${esc(k)}">${esc(k)}</span>
+      <span class="biz-bar-track"><span class="biz-bar-fill" style="width:${max ? (n / max) * 100 : 0}%"></span></span>
+      <span class="biz-bar-num">${n}</span>
+    </div>`).join("");
+}
+
+// 最近动态：时间线。取最近 6 条任务按更新时间倒序，把状态翻成可读事件。
+function renderTimeline(rows) {
+  const recent = [...rows]
+    .sort((a, b) => (b.updated_at || "").localeCompare(a.updated_at || ""))
+    .slice(0, 6);
+  const event = (t) => {
+    if (t.status === "completed") return { tone: "ok", text: "审查完成" };
+    if (t.status === "rejected") return { tone: "warn", text: "非合同·已拒绝" };
+    if (t.status === "blocked") return { tone: "bad", text: "解析受阻" };
+    if (t.status === "pending") return { tone: "idle", text: "待处理" };
+    return { tone: "idle", text: "审查进行中" };
+  };
+  const box = document.getElementById("dashTimeline");
+  if (!box) return;
+  if (!recent.length) { box.innerHTML = `<li class="dash-empty">暂无动态</li>`; return; }
+  box.innerHTML = recent.map(t => {
+    const ev = event(t);
+    return `<li class="tl-item">
+      <span class="tl-dot tl-${ev.tone}"></span>
+      <div class="tl-body">
+        <div class="tl-line">
+          <span class="tl-name" title="${esc(t.filename)}">${esc(t.filename)}</span>
+          <span class="tl-tag tl-${ev.tone}">${ev.text}</span>
+        </div>
+        <div class="tl-time">${esc(t.updated_at || t.created_at || "")}</div>
+      </div>
+    </li>`;
+  }).join("");
+}
+
+function renderAnalytics(rows) {
+  renderRiskDonut(rows);
+  renderBizBars(rows);
+  renderTimeline(rows);
+}
+
+// 应用「搜索 + 风险 + 状态 + 排序」，返回当前应展示的行。
+// 抽成独立函数：清单渲染与 CSV 导出共用同一份结果集，保证"导出的就是看到的"。
+function applyDashFilters(rows) {
+  const kw = (document.getElementById("dashSearch").value || "").trim().toLowerCase();
   const fr = document.getElementById("filterRisk").value;
   const fs = document.getElementById("filterStatus").value;
-  const data = rows.filter(t =>
-    (!fr || (t.report && t.report.overall_level === fr)) &&
-    (!fs || t.status === fs));
+  const sortBy = document.getElementById("sortBy").value;
+  const riskRank = { high: 3, medium: 2, low: 1 };
+  const list = rows.filter(t => {
+    if (fr && !(t.report && t.report.overall_level === fr)) return false;
+    if (fs && t.status !== fs) return false;
+    if (kw) {
+      const hay = [t.filename, t.contract_no, t.meta && t.meta.party_b, t.contract_type]
+        .filter(Boolean).join(" ").toLowerCase();
+      if (!hay.includes(kw)) return false;
+    }
+    return true;
+  });
+  const amt = (t) => (t.meta && t.meta.amount) || 0;
+  const lv = (t) => (t.report && riskRank[t.report.overall_level]) || 0;
+  list.sort((a, b) => {
+    if (sortBy === "time_asc") return (a.created_at || "").localeCompare(b.created_at || "");
+    if (sortBy === "amount_desc") return amt(b) - amt(a);
+    if (sortBy === "risk_desc") return lv(b) - lv(a) || amt(b) - amt(a);
+    return (b.created_at || "").localeCompare(a.created_at || "");
+  });
+  return list;
+}
+
+async function loadTasks() {
+  const rows = await (await fetch(API + "/api/tasks")).json();
+  window.__dashRows = rows;              // 缓存原始行，供筛选/导出复用
+  renderStats(rows);
+  renderAnalytics(rows);
+  renderTaskList(rows);
+}
+
+// 渲染清单（表格；窄屏由 CSS 折成卡片）。每个单元格补 data-label 作折叠后的标题。
+function renderTaskList(rows) {
+  const data = applyDashFilters(rows);
   const body = document.getElementById("taskBody");
   document.getElementById("emptyHint").style.display = data.length ? "none" : "block";
+  // 结果计数 + 「清空筛选」显隐（有任何非默认条件时才出现）
+  const stat = document.getElementById("dashResultStat");
+  if (stat) stat.textContent = `共 ${data.length} / ${rows.length} 条`;
+  const dirty = document.getElementById("dashSearch").value
+    || document.getElementById("filterRisk").value
+    || document.getElementById("filterStatus").value
+    || document.getElementById("sortBy").value !== "time_desc";
+  const clearBtn = document.getElementById("dashClearBtn");
+  if (clearBtn) clearBtn.classList.toggle("hidden", !dirty);
+
   body.innerHTML = data.map(t => `
     <tr>
-      <td>${esc(t.filename)}</td>
-      <td>${esc(t.contract_type)}</td>
-      <td>${t.meta && t.meta.amount ? Number(t.meta.amount).toLocaleString() + " " + (t.meta.currency || "元") : "—"}</td>
-      <td>${statusTag(t.status)}</td>
-      <td>${t.report ? riskTag(t.report.overall_level) : "—"}</td>
-      <td>${esc(t.created_at)}</td>
-      <td>
+      <td data-label="合同名称" class="td-name">${esc(t.filename)}</td>
+      <td data-label="业务类型">${esc(t.contract_type)}</td>
+      <td data-label="金额">${t.meta && t.meta.amount ? Number(t.meta.amount).toLocaleString() + " " + (t.meta.currency || "元") : "—"}</td>
+      <td data-label="状态">${statusTag(t.status)}</td>
+      <td data-label="综合风险">${t.report ? riskTag(t.report.overall_level) : "—"}</td>
+      <td data-label="创建时间">${esc(t.created_at)}</td>
+      <td data-label="操作">
         ${(t.status === "completed" || t.status === "rejected")
           ? `<span class="link" onclick="location.hash='#workbench?task=${t.task_id}'">进入工作台</span>`
           : statusTag(t.status)}
         ${t.status === "blocked" ? ` <span class="link" onclick="reupload('${t.task_id}')">重试</span>` : ""}
       </td>
     </tr>`).join("");
+}
+
+// CSV 单元格转义：含逗号/引号/换行时用双引号包裹并转义内部引号
+function csvCell(v) {
+  const s = (v == null ? "" : String(v));
+  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+const STATUS_TEXT = { pending: "待处理", parsing: "解析中", checking: "类型校验中", reviewing: "审查中", blocked: "解析受阻", rejected: "已拒绝", completed: "审查完成" };
+const RISK_TEXT = { high: "高风险", medium: "中风险", low: "低风险" };
+
+// 导出「当前筛选结果」为 CSV（与清单同一口径），加 UTF-8 BOM 防 Excel 乱码。
+function exportDashCsv() {
+  const rows = window.__dashRows || [];
+  const data = applyDashFilters(rows);
+  const head = ["合同名称", "业务类型", "金额", "状态", "综合风险", "创建时间", "任务ID"];
+  const lines = [head.join(",")];
+  for (const t of data) {
+    lines.push([
+      t.filename, t.contract_type,
+      t.meta && t.meta.amount ? t.meta.amount : "",
+      STATUS_TEXT[t.status] || t.status,
+      t.report ? (RISK_TEXT[t.report.overall_level] || "") : "",
+      t.created_at, t.task_id,
+    ].map(csvCell).join(","));
+  }
+  const blob = new Blob(["\uFEFF" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `合同审查清单_${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
 }
 
 document.getElementById("uploadBtn").onclick = () => document.getElementById("fileInput").click();
@@ -319,8 +489,23 @@ document.getElementById("fileInput").onchange = async (e) => {
   }
   location.hash = "#workbench?task=" + task.task_id;
 };
-document.getElementById("filterRisk").onchange = loadTasks;
-document.getElementById("filterStatus").onchange = loadTasks;
+// 大盘筛选/搜索/排序联动：任一变化只做前端重算（不重新拉数据），并同步计数与清空按钮
+document.getElementById("dashSearch").oninput = () => renderTaskList(window.__dashRows || []);
+document.getElementById("filterRisk").onchange = () => renderTaskList(window.__dashRows || []);
+document.getElementById("filterStatus").onchange = () => renderTaskList(window.__dashRows || []);
+document.getElementById("sortBy").onchange = () => renderTaskList(window.__dashRows || []);
+// 清空筛选：把搜索/风险/状态/排序复位到默认再重算
+document.getElementById("dashClearBtn").onclick = () => {
+  document.getElementById("dashSearch").value = "";
+  document.getElementById("filterRisk").value = "";
+  document.getElementById("filterStatus").value = "";
+  document.getElementById("sortBy").value = "time_desc";
+  renderTaskList(window.__dashRows || []);
+};
+// 刷新：重新拉取任务列表（含最新上传/审查结果）
+document.getElementById("refreshBtn").onclick = loadTasks;
+// 导出：把当前筛选结果落成 CSV
+document.getElementById("exportCsvBtn").onclick = exportDashCsv;
 
 async function reupload(taskId) {
   // 阻塞任务重试：弹系统文件框选新文件，连同任务 id 一起提交给后端，

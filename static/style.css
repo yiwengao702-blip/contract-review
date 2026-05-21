@@ -1253,3 +1253,145 @@ mark:hover { filter: brightness(.97); }
   .user-meta { display: none; }
   main { margin: 0 auto; padding: 18px 16px 36px; }
 }
+
+/* ============================================================================
+   审查大盘 · 布局与视觉层次重构
+   节奏：页头 → KPI 概览 → 分析区（环形/条形/时间线三块差异视图）→ 筛选操作条 → 清单。
+   分析区刻意用「读图」语言，清单用「查明细」语言，两者视觉性格拉开，避免整页一种腔调。
+   ============================================================================ */
+:root {
+  --sp-1: 6px; --sp-2: 10px; --sp-3: 14px; --sp-4: 18px; --sp-5: 26px;
+  --dash-gap: 18px;
+}
+
+/* 页头与后续区块的纵向节奏统一 */
+#dashboard .rl-head { margin-bottom: var(--sp-4); }
+
+/* ---------------- 分析区 ---------------- */
+.dash-analytics {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1.4fr) minmax(0, 1.25fr);
+  gap: var(--dash-gap);
+  margin-bottom: var(--sp-4);
+}
+.dash-card {
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 18px; box-shadow: var(--shadow); min-width: 0;
+  display: flex; flex-direction: column;
+}
+.dash-card-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+.dash-card-title {
+  margin: 0; font-size: 14.5px; font-weight: 600; color: var(--text);
+  padding-left: 10px; border-left: 3px solid var(--accent);
+}
+.dash-card-sub { font-size: 12px; color: var(--muted); }
+.dash-empty { color: var(--muted); font-size: 13px; padding: 12px 2px; }
+
+/* 环形占比图：纯 CSS conic-gradient + 中心挖空 + 图例 */
+.donut-body { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+.donut {
+  position: relative; flex: none; width: 132px; height: 132px; border-radius: 50%;
+  background: conic-gradient(#2a3550 0deg 360deg);
+  transition: background .4s ease;
+}
+.donut-hole {
+  position: absolute; inset: 20px; border-radius: 50%;
+  background: var(--card); border: 1px solid var(--line);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.donut-total { font-size: 24px; font-weight: 700; color: var(--text); line-height: 1; font-variant-numeric: tabular-nums; }
+.donut-unit { font-size: 11px; color: var(--muted); margin-top: 3px; }
+.donut-legend { list-style: none; margin: 0; padding: 0; flex: 1; min-width: 124px; display: flex; flex-direction: column; gap: 8px; }
+.donut-legend-item { display: grid; grid-template-columns: 10px 1fr auto auto; align-items: center; gap: 8px; font-size: 13px; }
+.dl-dot { width: 10px; height: 10px; border-radius: 3px; }
+.dl-label { color: var(--muted); }
+.dl-val { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+.dl-pct { color: var(--muted); min-width: 38px; text-align: right; font-variant-numeric: tabular-nums; }
+
+/* 业务类型横向条形：与环形并列的第二种「图」语言 */
+.biz-bars { display: flex; flex-direction: column; gap: 12px; }
+.biz-bar-row { display: grid; grid-template-columns: 72px 1fr 30px; align-items: center; gap: 10px; font-size: 13px; }
+.biz-bar-name { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.biz-bar-track { height: 9px; border-radius: 6px; background: #192134; overflow: hidden; }
+.biz-bar-fill { display: block; height: 100%; border-radius: 6px; background: linear-gradient(90deg, var(--primary), var(--accent)); transition: width .4s ease; }
+.biz-bar-num { text-align: right; color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* 最近动态时间线：第三种语言——事件流 */
+.dash-timeline { list-style: none; margin: 0; padding: 0; }
+.tl-item { display: grid; grid-template-columns: 16px 1fr; gap: 10px; padding: 7px 0; position: relative; }
+.tl-item:not(:last-child) .tl-dot::after {
+  content: ""; position: absolute; left: 4px; top: 16px; bottom: -14px;
+  width: 1px; background: var(--line);
+}
+.tl-dot { width: 9px; height: 9px; border-radius: 50%; margin-top: 5px; position: relative; background: var(--muted); }
+.tl-dot.tl-ok { background: var(--low); }
+.tl-dot.tl-warn { background: var(--medium); }
+.tl-dot.tl-bad { background: var(--high); }
+.tl-dot.tl-idle { background: var(--primary); }
+.tl-body { min-width: 0; }
+.tl-line { display: flex; align-items: center; gap: 8px; }
+.tl-name { color: var(--text); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tl-tag { flex: none; font-size: 11px; padding: 1px 8px; border-radius: 20px; }
+.tl-tag.tl-ok { color: var(--low); background: var(--low-bg); }
+.tl-tag.tl-warn { color: var(--medium); background: var(--medium-bg); }
+.tl-tag.tl-bad { color: var(--high); background: var(--high-bg); }
+.tl-tag.tl-idle { color: var(--primary); background: var(--primary-soft); }
+.tl-time { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+
+/* ---------------- 筛选与操作条 ---------------- */
+.dash-toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.dash-search { position: relative; display: flex; align-items: center; flex: 1 1 240px; min-width: 180px; }
+.dash-search-ico { position: absolute; left: 11px; font-size: 13px; opacity: .72; pointer-events: none; }
+.dash-search-input {
+  width: 100%; border: 1px solid var(--line); border-radius: 8px;
+  padding: 9px 12px 9px 32px; font-size: 14px; background: #1c2438; color: var(--text);
+}
+.dash-search-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
+.dash-toolbar-right { display: flex; align-items: center; gap: 8px; margin-left: auto; flex-wrap: wrap; }
+.dash-result-stat { font-size: 13px; color: var(--muted); margin-right: 4px; white-space: nowrap; }
+
+/* 清单：名称列加重，数字等宽对齐 */
+.task-table .td-name { color: var(--text); font-weight: 600; }
+.task-table td { font-variant-numeric: tabular-nums; }
+
+/* ---------------- 响应式：桌面 → 平板 → 手机 ---------------- */
+@media (max-width: 1100px) {
+  /* 分析区：两块并列，时间线整行铺开 */
+  .dash-analytics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dash-analytics .timeline-card { grid-column: 1 / -1; }
+}
+@media (max-width: 900px) {
+  /* 分析区收成单列；操作条右组整行右对齐 */
+  .dash-analytics { grid-template-columns: 1fr; }
+  .dash-analytics .timeline-card { grid-column: auto; }
+  .dash-toolbar-right { margin-left: 0; width: 100%; justify-content: flex-end; }
+}
+@media (max-width: 720px) {
+  .dash-search { flex: 1 1 100%; }
+  .dash-toolbar .select { flex: 1 1 140px; }
+  .donut-body { justify-content: center; }
+}
+
+/* 窄屏「表格 → 卡片」：用每格 data-label 补标题，逐行堆叠成卡片。
+   表格在手机上横向溢出、列挤成一条线，是后台系统最常见的问题；
+   这里不另写一套 DOM，纯 CSS 折叠，保证渲染口径唯一。 */
+@media (max-width: 640px) {
+  .table-card { background: transparent; border: 0; box-shadow: none; padding: 0; overflow: visible; }
+  .task-table, .task-table tbody, .task-table tr, .task-table td { display: block; width: 100%; }
+  .task-table thead { display: none; }
+  .task-table tr {
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+    box-shadow: var(--shadow); margin-bottom: 12px; padding: 4px 14px;
+  }
+  .task-table td {
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    padding: 9px 0; border-bottom: 1px dashed var(--line); text-align: right;
+  }
+  .task-table tr td:last-child { border-bottom: 0; }
+  .task-table td::before {
+    content: attr(data-label); color: var(--muted); font-size: 12.5px;
+    font-weight: 600; text-align: left; flex: none;
+  }
+  .task-table td.td-name { font-size: 15px; }
+  .task-table .empty { padding: 26px 12px; }
+}

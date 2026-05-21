@@ -22,6 +22,9 @@
 
   <main id="app">
     <!-- ============ 审查大盘 ============ -->
+    <!-- 布局骨架（自上而下）：页头操作 → KPI 概览 → 分析区 → 筛选操作条 → 合同清单。
+         分析区与清单刻意用两套视觉语言：分析区是「读图」（环形占比 + 横向条形 + 时间线），
+         清单是「查明细」（表格 / 窄屏折成卡片），避免整页只有一种信息呈现方式。 -->
     <section id="dashboard" class="view">
       <div class="rl-head">
         <div class="rl-head-text">
@@ -37,7 +40,52 @@
           </button>
         </div>
       </div>
-      <div class="toolbar">
+
+      <!-- KPI 概览卡：合同总数 / 待审任务 / 高风险合同 / 本周审结 -->
+      <div id="statsBar" class="stat-cards"></div>
+
+      <!-- 分析区：三块差异视图（环形占比 / 横向条形 / 时间线） -->
+      <div class="dash-analytics">
+        <div class="dash-card donut-card">
+          <div class="dash-card-head">
+            <h3 class="dash-card-title">风险等级分布</h3>
+            <span class="dash-card-sub">按综合风险等级统计</span>
+          </div>
+          <div class="donut-body">
+            <div class="donut" id="riskDonut">
+              <div class="donut-hole">
+                <span class="donut-total" id="donutTotal">0</span>
+                <span class="donut-unit">份已评</span>
+              </div>
+            </div>
+            <ul class="donut-legend" id="riskLegend"></ul>
+          </div>
+        </div>
+
+        <div class="dash-card bars-card">
+          <div class="dash-card-head">
+            <h3 class="dash-card-title">业务类型分布</h3>
+            <span class="dash-card-sub">按合同业务类型统计</span>
+          </div>
+          <div class="biz-bars" id="bizBars"></div>
+        </div>
+
+        <div class="dash-card timeline-card">
+          <div class="dash-card-head">
+            <h3 class="dash-card-title">最近动态</h3>
+            <span class="dash-card-sub">最新审查事件</span>
+          </div>
+          <ul class="dash-timeline" id="dashTimeline"></ul>
+        </div>
+      </div>
+
+      <!-- 筛选与操作条：搜索 / 风险 / 状态 / 排序 / 计数 / 清空 / 刷新 / 导出 -->
+      <div class="toolbar dash-toolbar">
+        <div class="dash-search">
+          <span class="dash-search-ico">🔍</span>
+          <input id="dashSearch" class="dash-search-input" type="search"
+                 placeholder="搜索合同名称 / 编号 / 相对方" />
+        </div>
         <select id="filterRisk" class="select">
           <option value="">全部风险等级</option>
           <option value="high">高风险</option>
@@ -54,8 +102,21 @@
           <option value="rejected">已拒绝（非合同）</option>
           <option value="completed">审查完成</option>
         </select>
+        <select id="sortBy" class="select">
+          <option value="time_desc">按创建时间（最新）</option>
+          <option value="time_asc">按创建时间（最早）</option>
+          <option value="amount_desc">按金额（从高到低）</option>
+          <option value="risk_desc">按风险（高→低）</option>
+        </select>
+        <div class="dash-toolbar-right">
+          <span class="dash-result-stat" id="dashResultStat"></span>
+          <button id="dashClearBtn" class="btn small hidden">✕ 清空筛选</button>
+          <button id="refreshBtn" class="btn small">↻ 刷新</button>
+          <button id="exportCsvBtn" class="btn small">⬇ 导出 CSV</button>
+        </div>
       </div>
-      <div id="statsBar" class="stat-cards"></div>
+
+      <!-- 合同清单：桌面为表格，窄屏经 CSS 折叠成卡片（每格补 data-label 作标题） -->
       <div id="taskTable" class="card table-card">
         <table class="task-table">
           <thead>
