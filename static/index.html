@@ -64,8 +64,12 @@
 
         <div class="dash-card bars-card">
           <div class="dash-card-head">
-            <h3 class="dash-card-title">业务类型分布</h3>
-            <span class="dash-card-sub">按合同业务类型统计</span>
+            <h3 class="dash-card-title" id="bizCardTitle">业务类型分布</h3>
+            <!-- 维度切换：同一张条形卡在「业务类型 / 送审部门」两个口径间切换，避免再多占一张卡 -->
+            <div class="biz-dims" id="bizDims">
+              <button type="button" class="biz-dim active" data-dim="type">业务类型</button>
+              <button type="button" class="biz-dim" data-dim="dept">送审部门</button>
+            </div>
           </div>
           <div class="biz-bars" id="bizBars"></div>
         </div>
@@ -112,6 +116,8 @@
           <span class="dash-result-stat" id="dashResultStat"></span>
           <button id="dashClearBtn" class="btn small hidden">✕ 清空筛选</button>
           <button id="refreshBtn" class="btn small">↻ 刷新</button>
+          <!-- 自动刷新：30 秒轮询一次任务列表；开着时按钮高亮，再点一次关闭 -->
+          <button id="autoRefreshBtn" class="btn small" title="每 30 秒自动刷新一次任务列表">⏱ 自动刷新</button>
           <button id="exportCsvBtn" class="btn small">⬇ 导出 CSV</button>
         </div>
       </div>

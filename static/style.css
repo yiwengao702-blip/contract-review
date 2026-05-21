@@ -1350,6 +1350,24 @@ mark:hover { filter: brightness(.97); }
 .dash-toolbar-right { display: flex; align-items: center; gap: 8px; margin-left: auto; flex-wrap: wrap; }
 .dash-result-stat { font-size: 13px; color: var(--muted); margin-right: 4px; white-space: nowrap; }
 
+/* KPI 卡可点击：整体是筛选入口，悬停给青色描边反馈「这卡能点」 */
+.stat-card.clickable { cursor: pointer; }
+.stat-card.clickable:hover { border-color: var(--primary); }
+
+/* 分布卡维度切换 chips（业务类型 / 送审部门） */
+.biz-dims { display: flex; gap: 6px; }
+.biz-dim {
+  border: 1px solid var(--line); background: transparent; color: var(--muted);
+  font-size: 12px; padding: 3px 10px; border-radius: 20px; cursor: pointer;
+  transition: color .15s, border-color .15s, background .15s;
+}
+.biz-dim:hover { color: var(--text); }
+.biz-dim.active { color: var(--primary); border-color: var(--primary); background: var(--primary-soft); }
+
+/* 自动刷新开关的「开启」态：绿色描边，与「已停止」的中性灰区分 */
+.btn.active-toggle { border-color: var(--low); color: var(--low); }
+.btn.active-toggle:hover { border-color: var(--low); color: var(--low); }
+
 /* 清单：名称列加重，数字等宽对齐 */
 .task-table .td-name { color: var(--text); font-weight: 600; }
 .task-table td { font-variant-numeric: tabular-nums; }

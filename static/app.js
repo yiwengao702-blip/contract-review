@@ -250,15 +250,30 @@ function computeStats(rows) {
   return { total, pending, high, week };
 }
 
+// 按预设组合一键设置大盘筛选条件（KPI 卡点击即筛的底层实现）
+function setDashFilter({ kw, risk, status, sort } = {}) {
+  const el = (id) => document.getElementById(id);
+  if (kw !== undefined) el("dashSearch").value = kw;
+  if (risk !== undefined) el("filterRisk").value = risk;
+  if (status !== undefined) el("filterStatus").value = status;
+  if (sort !== undefined) el("sortBy").value = sort;
+  renderTaskList(window.__dashRows || []);
+}
+
 function renderStats(rows) {
   const s = computeStats(rows);
   const cards = [
-    { ico: "📁", val: s.total, label: "合同总数", cls: "blue" },
-    { ico: "⏳", val: s.pending, label: "待审任务", cls: "amber" },
-    { ico: "⚠️", val: s.high, label: "高风险合同", cls: "red" },
-    { ico: "✅", val: s.week, label: "本周审结", cls: "green" },
+    { ico: "📁", val: s.total, label: "合同总数", cls: "blue", tip: "点击查看全部合同",
+      apply: () => setDashFilter({ kw: "", risk: "", status: "", sort: "time_desc" }) },
+    { ico: "⏳", val: s.pending, label: "待审任务", cls: "amber", tip: "点击只看待处理任务",
+      apply: () => setDashFilter({ kw: "", risk: "", status: "pending" }) },
+    { ico: "⚠️", val: s.high, label: "高风险合同", cls: "red", tip: "点击只看高风险合同",
+      apply: () => setDashFilter({ kw: "", risk: "high", status: "" }) },
+    { ico: "✅", val: s.week, label: "本周审结", cls: "green", tip: "点击只看审查完成的合同",
+      apply: () => setDashFilter({ kw: "", risk: "", status: "completed" }) },
   ];
-  document.getElementById("statsBar").innerHTML = cards.map(c => `
+  const box = document.getElementById("statsBar");
+  box.innerHTML = cards.map(c => `
     <div class="stat-card ${c.cls}">
       <div class="stat-ico">${c.ico}</div>
       <div class="stat-meta">
@@ -266,6 +281,12 @@ function renderStats(rows) {
         <div class="stat-label">${c.label}</div>
       </div>
     </div>`).join("");
+  // KPI 卡可点击：点哪张卡就把对应筛选条件套到清单上（悬停有 title 提示口径）
+  box.querySelectorAll(".stat-card").forEach((el, i) => {
+    el.classList.add("clickable");
+    el.title = cards[i].tip;
+    el.onclick = cards[i].apply;
+  });
 }
 
 // —— 分析区：与清单刻意采用不同视觉语言（这里是"读图"，清单是"查明细"）——
@@ -308,11 +329,17 @@ function renderRiskDonut(rows) {
   }).join("");
 }
 
-// 业务类型分布：横向条形。条长按当前最大计数归一，一眼看出"哪类合同最多"。
+// 分布卡当前维度：type=业务类型 / dept=送审部门（同一张条形卡两个口径切换）
+let __bizDim = "type";
+
+// 横向条形。条长按当前最大计数归一，一眼看出"哪类/哪个部门合同最多"。
 function renderBizBars(rows) {
+  const keyOf = (t) => __bizDim === "dept"
+    ? (t.applicant_dept || "未填")
+    : (t.contract_type || "未分类");
   const map = new Map();
   for (const t of rows) {
-    const k = t.contract_type || "未分类";
+    const k = keyOf(t);
     map.set(k, (map.get(k) || 0) + 1);
   }
   const list = [...map.entries()].sort((a, b) => b[1] - a[1]);
@@ -327,6 +354,20 @@ function renderBizBars(rows) {
       <span class="biz-bar-num">${n}</span>
     </div>`).join("");
 }
+
+// 切换分布维度：同步标题高亮与卡片标题，并按新口径重画
+function setBizDim(dim) {
+  __bizDim = dim === "dept" ? "dept" : "type";
+  document.querySelectorAll("#bizDims .biz-dim").forEach(b => {
+    b.classList.toggle("active", b.dataset.dim === __bizDim);
+  });
+  const title = document.getElementById("bizCardTitle");
+  if (title) title.textContent = __bizDim === "dept" ? "送审部门分布" : "业务类型分布";
+  renderBizBars(window.__dashRows || []);
+}
+document.querySelectorAll("#bizDims .biz-dim").forEach(b => {
+  b.onclick = () => setBizDim(b.dataset.dim);
+});
 
 // 最近动态：时间线。取最近 6 条任务按更新时间倒序，把状态翻成可读事件。
 function renderTimeline(rows) {
@@ -406,9 +447,13 @@ function renderTaskList(rows) {
   const data = applyDashFilters(rows);
   const body = document.getElementById("taskBody");
   document.getElementById("emptyHint").style.display = data.length ? "none" : "block";
-  // 结果计数 + 「清空筛选」显隐（有任何非默认条件时才出现）
+  // 结果计数 + 当前筛选集的金额合计（口径与清单一致）+ 「清空筛选」显隐
+  const sum = data.reduce((a, t) => a + ((t.meta && t.meta.amount) || 0), 0);
   const stat = document.getElementById("dashResultStat");
-  if (stat) stat.textContent = `共 ${data.length} / ${rows.length} 条`;
+  if (stat) {
+    stat.textContent = `共 ${data.length} / ${rows.length} 条`
+      + (sum ? ` · 合计 ${sum.toLocaleString()} 元` : "");
+  }
   const dirty = document.getElementById("dashSearch").value
     || document.getElementById("filterRisk").value
     || document.getElementById("filterStatus").value
@@ -506,6 +551,26 @@ document.getElementById("dashClearBtn").onclick = () => {
 document.getElementById("refreshBtn").onclick = loadTasks;
 // 导出：把当前筛选结果落成 CSV
 document.getElementById("exportCsvBtn").onclick = exportDashCsv;
+
+// 自动刷新：30 秒轮询任务列表，方便盯着上传/审查进展不用手动点刷新。
+// 只在大盘/规则页轮询；切到工作台（正在看单份合同详情）时跳过，避免无谓请求。
+let __autoTimer = null;
+document.getElementById("autoRefreshBtn").onclick = () => {
+  const btn = document.getElementById("autoRefreshBtn");
+  if (__autoTimer) {                          // 再点一次 = 关闭
+    clearInterval(__autoTimer);
+    __autoTimer = null;
+    btn.classList.remove("active-toggle");
+    btn.textContent = "⏱ 自动刷新";
+    return;
+  }
+  __autoTimer = setInterval(() => {
+    if (typeof location !== "undefined" && String(location.hash || "").startsWith("#workbench")) return;
+    loadTasks();
+  }, 30000);
+  btn.classList.add("active-toggle");
+  btn.textContent = "⏱ 自动刷新·开";
+};
 
 async function reupload(taskId) {
   // 阻塞任务重试：弹系统文件框选新文件，连同任务 id 一起提交给后端，
