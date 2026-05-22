@@ -19,6 +19,8 @@ data/uploads/
 data/risk_state/
 # 自助注册用户持久化文件（运行时生成，含账号明文，非源码）
 data/users.json
+# 相对方黑名单（运行时持久化状态，审计中心维护）
+data/blacklist.json
 
 # ===== 日志 =====
 *.log

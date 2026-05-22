@@ -15,6 +15,7 @@
     <nav class="nav">
       <a href="#dashboard" data-view="dashboard">审查大盘</a>
       <a href="#rules" data-view="rules">合规规则与模板</a>
+      <a href="#audit" data-view="audit">审计台账</a>
       <a href="#export" data-view="export">失败外发审核</a>
     </nav>
     <div class="user-box" id="userBox"></div>
@@ -212,6 +213,97 @@
       <!-- 主区：卡片网格（一条一张卡，替代原表格） -->
       <div class="rl-grid" id="rlGrid"></div>
       <div id="rlEmpty" class="rl-empty hidden">没有符合条件的记录</div>
+    </section>
+
+    <!-- ============ 审计台账（对接 /api/audit/*） ============ -->
+    <!-- 四块审计资产共用一个页面：台账（查明细）/ 相对方画像（看主体）/
+         风险洞察（看趋势）/ 黑名单（设门槛）。所有数字实时派生自审查结果，
+         不另存副本，避免"台账与审查结果对不上"的双写不一致。 -->
+    <section id="audit" class="view hidden">
+      <div class="rl-head">
+        <div class="rl-head-text">
+          <h2 class="rl-title">审计台账</h2>
+          <p class="rl-sub">
+            把分散在各份合同里的审查结果，聚合成审计视角的四种资产：可检索的合同台账、按主体聚合的相对方画像、
+            风险洞察与相对方黑名单；数字实时派生自审查结果，仅黑名单为持久化状态。
+          </p>
+        </div>
+        <div class="rl-head-btns">
+          <button id="adRefreshBtn" class="btn rl-ghost-btn">↻ 刷新</button>
+        </div>
+      </div>
+
+      <div class="rl-tabs" id="adTabs">
+        <button class="rl-tab active" data-tab="ledger">合同台账 <span class="rl-tab-n" id="adN-ledger">—</span></button>
+        <button class="rl-tab" data-tab="parties">相对方画像 <span class="rl-tab-n" id="adN-parties">—</span></button>
+        <button class="rl-tab" data-tab="insights">风险洞察 <span class="rl-tab-n" id="adN-insights">—</span></button>
+        <button class="rl-tab" data-tab="blacklist">相对方黑名单 <span class="rl-tab-n" id="adN-blacklist">—</span></button>
+      </div>
+
+      <!-- ① 合同台账 -->
+      <div id="adPane-ledger">
+        <div class="toolbar ad-toolbar">
+          <div class="dash-search">
+            <span class="dash-search-ico">🔍</span>
+            <input id="adKw" class="dash-search-input" type="search" placeholder="搜索合同名称 / 相对方 / 任务编号" />
+          </div>
+          <select id="adType" class="select"><option value="">全部业务类型</option></select>
+          <select id="adRisk" class="select">
+            <option value="">全部风险等级</option>
+            <option value="high">高风险</option>
+            <option value="medium">中风险</option>
+            <option value="low">低风险</option>
+          </select>
+          <select id="adSort" class="select">
+            <option value="created_at:desc">按创建时间（最新）</option>
+            <option value="amount:desc">按金额（从高到低）</option>
+            <option value="risk_score:desc">按风险分（高→低）</option>
+            <option value="findings:desc">按风险条目（多→少）</option>
+          </select>
+        </div>
+        <!-- 汇总指标条：合同数 / 总金额 / 高风险率 / 风险条目 -->
+        <div id="adSummary" class="ad-summary"></div>
+        <div class="card table-card">
+          <table class="task-table">
+            <thead>
+              <tr>
+                <th>合同名称</th><th>业务类型</th><th>甲方 / 乙方</th><th>金额</th>
+                <th>综合风险</th><th>风险条目</th><th>创建时间</th><th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="adLedgerBody"></tbody>
+          </table>
+          <div id="adLedgerEmpty" class="empty hidden">暂无台账数据——完成一笔合同审查后自动进入台账。</div>
+        </div>
+      </div>
+
+      <!-- ② 相对方画像 -->
+      <div id="adPane-parties" class="hidden">
+        <div id="adParties" class="ad-cp-grid"></div>
+        <div id="adPartiesEmpty" class="empty hidden">暂无相对方数据。</div>
+      </div>
+
+      <!-- ③ 风险洞察 -->
+      <div id="adPane-insights" class="hidden">
+        <div id="adInsights" class="ad-ins-grid"></div>
+      </div>
+
+      <!-- ④ 相对方黑名单 -->
+      <div id="adPane-blacklist" class="hidden">
+        <div class="ex-card ad-bl-form">
+          <div class="ex-card-head">
+            <span class="ex-card-title">加入黑名单</span>
+          </div>
+          <div class="ad-bl-row">
+            <input id="adBlName" class="modal-input" placeholder="相对方名称（与合同主体名一致）" />
+            <input id="adBlReason" class="modal-input" placeholder="理由（可选，供审计留痕）" />
+            <button id="adBlAddBtn" class="btn primary">加入黑名单</button>
+          </div>
+          <div class="field-hint">加入后会在相对方画像中标记黑名单状态；移出需在下方记录里二次确认。</div>
+        </div>
+        <div id="adBlacklist" class="ad-bl-list"></div>
+        <div id="adBlacklistEmpty" class="empty hidden">黑名单为空。</div>
+      </div>
     </section>
 
     <!-- ============ 失败外发审核（钉钉） ============ -->

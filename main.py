@@ -111,6 +111,9 @@ def _seed_demo_tasks() -> None:
             t.report = ReviewReport(contract_name=filename.rsplit(".", 1)[0],
                                     contract_type=ctype, overall_level=level,
                                     summary=summary, findings=findings)
+            # 审计中心统计读的是任务级 findings（而非 report.findings），
+            # 两处必须同时挂，否则台账「风险条目」恒为 0、洞察维度分布为空
+            t.findings = findings
         return t
 
     seeds = [
@@ -426,6 +429,64 @@ def do_register(payload: dict):
         "role_name": info["role_name"],
         "display_name": info["display_name"],
     }
+
+
+# ---------------------------------------------------------------------- #
+# 审计台账接口：对接 services.audit_center（台账 / 相对方画像 / 风险洞察 / 黑名单）
+# 所有数字实时派生自审查任务，不另存副本；仅黑名单是持久化状态。
+# ---------------------------------------------------------------------- #
+@app.get("/api/audit/ledger")
+def audit_ledger(keyword: str = "", contract_type: str = "", risk_level: str = "",
+                 sort: str = "created_at", order: str = "desc"):
+    """合同台账：检索 + 筛选 + 排序 + 汇总（默认只纳入已出具审查报告的任务）。"""
+    return audit_center.ledger(keyword=keyword, contract_type=contract_type,
+                               risk_level=risk_level, sort=sort, order=order)
+
+
+@app.get("/api/audit/facets")
+def audit_facets():
+    """台账可选筛选项（业务类型 / 风险等级及计数），从现有数据反推。"""
+    return audit_center.ledger_facets()
+
+
+@app.get("/api/audit/counterparties")
+def audit_counterparties():
+    """相对方画像：按签约主体聚合合作次数、累计金额、风险分布与黑名单状态。"""
+    return audit_center.counterparties()
+
+
+@app.get("/api/audit/insights")
+def audit_insights():
+    """风险洞察：等级分布、维度分布、高发规则排行、业务类型分布。"""
+    return audit_center.insights()
+
+
+@app.get("/api/audit/blacklist")
+def audit_blacklist():
+    """黑名单清单。"""
+    return audit_center.blacklist()
+
+
+@app.post("/api/audit/blacklist")
+def audit_blacklist_add(payload: dict):
+    """把相对方加入黑名单（名字与合同主体一致，理由留痕）。"""
+    try:
+        return audit_center.add_blacklist(
+            name=str(payload.get("name") or ""),
+            reason=str(payload.get("reason") or ""),
+            operator=str(payload.get("operator") or ""),
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.post("/api/audit/blacklist/remove")
+def audit_blacklist_remove(payload: dict):
+    """把相对方移出黑名单（移出属破坏性操作，前端需二次确认）。"""
+    try:
+        return audit_center.remove_blacklist(str(payload.get("name") or ""))
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
 
 
 @app.get("/api/files/{task_id}")

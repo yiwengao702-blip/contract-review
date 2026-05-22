@@ -1368,6 +1368,84 @@ mark:hover { filter: brightness(.97); }
 .btn.active-toggle { border-color: var(--low); color: var(--low); }
 .btn.active-toggle:hover { border-color: var(--low); color: var(--low); }
 
+/* ============================================================================
+   审计台账页（#audit）：台账 / 相对方画像 / 风险洞察 / 黑名单
+   ============================================================================ */
+/* 台账筛选条：与大盘筛选条同构（复用 .dash-search），下拉可铺开 */
+.ad-toolbar { flex-wrap: wrap; }
+.ad-toolbar .select { flex: 0 1 auto; }
+
+/* 汇总指标条：一行五格，高风险率超标时整格泛红 */
+.ad-summary { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+.ad-sum-item {
+  flex: 1 1 150px; display: flex; flex-direction: column; gap: 2px;
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 10px 14px; box-shadow: var(--shadow-sm);
+}
+.ad-sum-k { font-size: 12px; color: var(--muted); }
+.ad-sum-v { font-size: 16px; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+.ad-sum-item.tone-warn .ad-sum-v { color: var(--medium); }
+.ad-sum-item.tone-bad .ad-sum-v { color: var(--high); }
+
+/* 甲乙方列：窄屏卡片化时允许换行 */
+.ad-td-parties { max-width: 260px; }
+
+/* 相对方画像：卡片网格，黑名单卡带红脊线以示警示 */
+.ad-cp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
+.ad-cp-card {
+  background: var(--card); border: 1px solid var(--line); border-left: 3px solid var(--primary);
+  border-radius: var(--radius); padding: 14px 16px; box-shadow: var(--shadow-sm);
+  display: flex; flex-direction: column; gap: 8px; min-width: 0;
+}
+.ad-cp-card.is-bl { border-left-color: var(--high); }
+.ad-cp-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.ad-cp-name { font-weight: 700; color: var(--text); font-size: 14.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ad-cp-stats { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12.5px; color: var(--muted); }
+.ad-cp-stats b { color: var(--text); font-variant-numeric: tabular-nums; }
+.ad-cp-meta { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* 风险洞察：三卡布局（复用大盘 .dash-card 骨架），维度条用紫渐变与大盘的青紫条区分 */
+.ad-ins-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--dash-gap); }
+.ad-ins-sum { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.ad-ins-kv { display: flex; flex-direction: column; gap: 2px; }
+.ad-ins-kv span { font-size: 12px; color: var(--muted); }
+.ad-ins-kv b { font-size: 18px; color: var(--text); font-variant-numeric: tabular-nums; }
+.ad-ins-bar { background: linear-gradient(90deg, var(--accent), var(--primary)); }
+.ad-rules { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; counter-reset: rule; }
+.ad-rule-row {
+  display: flex; align-items: center; gap: 8px; font-size: 13px;
+  padding: 6px 0; border-bottom: 1px dashed var(--line); counter-increment: rule;
+}
+.ad-rule-row::before { content: counter(rule); flex: none; width: 18px; height: 18px; border-radius: 4px; background: var(--primary-soft); color: var(--primary); font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+.ad-rule-row:last-child { border-bottom: 0; }
+.ad-rule-name { flex: 1; min-width: 0; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ad-rule-n { flex: none; color: var(--muted); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* 黑名单：表单行 + 记录列表 */
+.ad-bl-form { margin-bottom: 14px; }
+.ad-bl-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.ad-bl-row .modal-input { flex: 1 1 200px; }
+.ad-bl-row .btn { flex: none; }
+.ad-bl-list { display: flex; flex-direction: column; gap: 8px; }
+.ad-bl-row-item {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--card); border: 1px solid var(--line); border-left: 3px solid var(--high);
+  border-radius: var(--radius); padding: 10px 14px; box-shadow: var(--shadow-sm); min-width: 0;
+}
+.ad-bl-name { flex: none; font-weight: 700; color: var(--text); }
+.ad-bl-reason { flex: 1; min-width: 0; color: var(--muted); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ad-bl-meta { flex: none; font-size: 12px; color: var(--muted); }
+
+/* 审计页响应式 */
+@media (max-width: 1100px) {
+  .ad-ins-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 720px) {
+  .ad-toolbar .select { flex: 1 1 140px; }
+  .ad-bl-row-item { flex-wrap: wrap; }
+  .ad-bl-reason { flex: 1 1 100%; white-space: normal; }
+}
+
 /* 清单：名称列加重，数字等宽对齐 */
 .task-table .td-name { color: var(--text); font-weight: 600; }
 .task-table td { font-variant-numeric: tabular-nums; }

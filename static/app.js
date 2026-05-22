@@ -49,18 +49,18 @@ if (!session) location.replace("/login");
 
 // 角色能力矩阵：true 表示该角色具备对应能力
 //   admin 平台管理员：全部能力
-//   legal 法务合规经理：审查、回写、规则库、失败外发审核
+//   legal 法务合规经理：审查、回写、规则库、审计台账、失败外发审核
 //   biz   采购业务经办：仅上传合同与查看审查结果（不可回写审批）
 // dingtalk 这个键控制「失败外发审核」页（把审查失败推送到钉钉群）。
 // 刻意不叫 export：工作台的「导出 Markdown」对所有角色开放，两者语义完全不同，
 // 共用一个名字迟早会有人误改权限，把导出按钮一起藏掉。
 const PERMS = {
-  admin: { upload: true, writeback: true, rules: true, dingtalk: true },
-  legal: { upload: true, writeback: true, rules: true, dingtalk: true },
-  biz:   { upload: true, writeback: false, rules: false, dingtalk: false },
+  admin: { upload: true, writeback: true, rules: true, audit: true, dingtalk: true },
+  legal: { upload: true, writeback: true, rules: true, audit: true, dingtalk: true },
+  biz:   { upload: true, writeback: false, rules: false, audit: false, dingtalk: false },
 };
 const perm = (session && PERMS[session.role])
-  || { upload: false, writeback: false, rules: false, dingtalk: false };
+  || { upload: false, writeback: false, rules: false, audit: false, dingtalk: false };
 
 // 顶栏用户区：显示当前用户与角色，并提供退出登录
 function renderUser() {
@@ -121,6 +121,10 @@ function applyPerms() {
   document.querySelectorAll('.nav a[data-view="export"]').forEach(a => {
     a.style.display = perm.dingtalk ? "" : "none";
   });
+  // 审计台账页：聚合全部合同的审计资产，与规则库同属管理侧能力
+  document.querySelectorAll('.nav a[data-view="audit"]').forEach(a => {
+    a.style.display = perm.audit ? "" : "none";
+  });
   // 上传入口
   const up = document.getElementById("uploadBtn");
   if (up) up.style.display = perm.upload ? "" : "none";
@@ -134,6 +138,7 @@ function applyPerms() {
   // 藏掉导航只是不给入口，直接改地址栏 hash 仍能进来，所以这里必须再兜一道
   if (!perm.rules && location.hash.startsWith("#rules")) location.hash = "#dashboard";
   if (!perm.dingtalk && location.hash.startsWith("#export")) location.hash = "#dashboard";
+  if (!perm.audit && location.hash.startsWith("#audit")) location.hash = "#dashboard";
   // 新增示范条款入口：同样受规则库权限约束（采购业务经办不可见）
   const addBtn = document.getElementById("rlAddBtn");
   if (addBtn) addBtn.style.display = perm.rules ? "" : "none";
@@ -216,6 +221,11 @@ function route() {
   } else if (h.startsWith("#rules")) {
     showView("rules");
     loadRules();
+  } else if (h.startsWith("#audit")) {
+    // 直接改 hash 进来的（未经导航点击）也要过一遍权限，不能只靠藏导航
+    if (!perm.audit) { location.hash = "#dashboard"; return; }
+    showView("audit");
+    loadAudit();
   } else if (h.startsWith("#export")) {
     // 直接改 hash 进来的（未经导航点击）也要过一遍权限，不能只靠藏导航
     if (!perm.dingtalk) { location.hash = "#dashboard"; return; }
@@ -509,6 +519,231 @@ function exportDashCsv() {
   a.click();
   a.remove();
 }
+
+// ---------------- 审计台账（#audit，对接 /api/audit/*） ----------------
+// 四块审计资产共用一个页面：台账 / 相对方画像 / 风险洞察 / 黑名单。
+// 数字全部来自后端实时聚合，前端只做筛选传参与渲染、不缓存副本——
+// 审计口径的页面最怕"看到的和真实的不一致"，宁肯每次进页重拉。
+const AUDIT = { tab: "ledger", kwTimer: null };
+
+// 金额格式化：台账 / 画像 / 洞察共用一个口径（千分位 + 无小数）
+function fmtAmount(n) {
+  return Number(n || 0).toLocaleString("zh-CN", { maximumFractionDigits: 0 });
+}
+
+// 切换审计子标签：切显隐 + 加载对应数据
+function setAuditTab(tab) {
+  AUDIT.tab = tab;
+  document.querySelectorAll("#adTabs .rl-tab").forEach(b => {
+    b.classList.toggle("active", b.dataset.tab === tab);
+  });
+  ["ledger", "parties", "insights", "blacklist"].forEach(k => {
+    const pane = document.getElementById("adPane-" + k);
+    if (pane) pane.classList.toggle("hidden", k !== tab);
+  });
+  loadAudit();
+}
+document.querySelectorAll("#adTabs .rl-tab").forEach(b => {
+  b.onclick = () => setAuditTab(b.dataset.tab);
+});
+
+async function loadAudit() {
+  if (AUDIT.tab === "parties") return loadAuditParties();
+  if (AUDIT.tab === "insights") return loadAuditInsights();
+  if (AUDIT.tab === "blacklist") return loadAuditBlacklist();
+  return loadAuditLedger();
+}
+
+// 台账请求防抖：搜索框 300ms 内连续输入只发最后一次
+function auditSearchKeyed() {
+  clearTimeout(AUDIT.kwTimer);
+  AUDIT.kwTimer = setTimeout(loadAuditLedger, 300);
+}
+
+async function loadAuditLedger() {
+  const [sort, order] = (document.getElementById("adSort").value || "created_at:desc").split(":");
+  const qs = new URLSearchParams({
+    keyword: document.getElementById("adKw").value || "",
+    contract_type: document.getElementById("adType").value || "",
+    risk_level: document.getElementById("adRisk").value || "",
+    sort: sort || "created_at", order: order || "desc",
+  });
+  const j = await (await fetch(API + "/api/audit/ledger?" + qs)).json();
+  const n = document.getElementById("adN-ledger");
+  if (n) n.textContent = j.total ?? 0;
+  renderLedgerSummary(j.summary || {});
+  renderLedgerRows(j.rows || []);
+}
+
+// 台账汇总指标条：高风险率超 30% 标红、有高风险标黄，让"该担心吗"一眼可见
+function renderLedgerSummary(s) {
+  const box = document.getElementById("adSummary");
+  if (!box) return;
+  const rate = s.high_rate ?? 0;
+  const tone = rate > 30 ? "bad" : rate > 0 ? "warn" : "";
+  const items = [
+    ["合同数", s.count ?? 0, ""],
+    ["总金额", fmtAmount(s.total_amount) + " 元", ""],
+    ["平均金额", fmtAmount(s.avg_amount) + " 元", ""],
+    ["高风险率", rate + "%", tone],
+    ["风险条目", (s.findings_total ?? 0) + " 条（高 " + (s.findings_high ?? 0) + "）", ""],
+  ];
+  box.innerHTML = items.map(([k, v, t]) => `
+    <div class="ad-sum-item${t ? " tone-" + t : ""}">
+      <span class="ad-sum-k">${k}</span><span class="ad-sum-v">${v}</span>
+    </div>`).join("");
+}
+
+function renderLedgerRows(rows) {
+  const body = document.getElementById("adLedgerBody");
+  document.getElementById("adLedgerEmpty").classList.toggle("hidden", rows.length > 0);
+  body.innerHTML = rows.map(r => {
+    // "none"（无风险）不在 riskTag 的映射里，单独渲染，避免出现 undefined 标签
+    const risk = r.risk_level === "none"
+      ? `<span class="tag">无风险</span>` : riskTag(r.risk_level);
+    return `
+    <tr>
+      <td data-label="合同名称" class="td-name">${esc(r.filename)}</td>
+      <td data-label="业务类型">${esc(r.contract_type)}</td>
+      <td data-label="甲方 / 乙方" class="ad-td-parties">
+        <span title="甲方">${esc(r.party_a || "—")}</span> / <span title="乙方">${esc(r.party_b || "—")}</span>
+      </td>
+      <td data-label="金额">${r.amount ? fmtAmount(r.amount) + " 元" : "—"}</td>
+      <td data-label="综合风险">${risk}</td>
+      <td data-label="风险条目">${r.findings_total ? `${r.findings_total} 条（高 ${r.findings_high}）` : "—"}</td>
+      <td data-label="创建时间">${esc(r.created_at)}</td>
+      <td data-label="操作"><span class="link" onclick="location.hash='#workbench?task=${r.task_id}'">进入工作台</span></td>
+    </tr>`;
+  }).join("");
+}
+
+async function loadAuditParties() {
+  const j = await (await fetch(API + "/api/audit/counterparties")).json();
+  const n = document.getElementById("adN-parties");
+  if (n) n.textContent = j.total ?? 0;
+  const box = document.getElementById("adParties");
+  document.getElementById("adPartiesEmpty").classList.toggle("hidden", (j.rows || []).length > 0);
+  box.innerHTML = (j.rows || []).map(p => `
+    <div class="ad-cp-card${p.blacklisted ? " is-bl" : ""}">
+      <div class="ad-cp-head">
+        <span class="ad-cp-name" title="${esc(p.name)}">${esc(p.name)}</span>
+        ${p.blacklisted
+          ? `<span class="tag blocked" title="${esc(p.blacklist_reason)}">黑名单</span>`
+          : `<span class="link ad-cp-bl" data-name="${esc(p.name)}">＋ 黑名单</span>`}
+      </div>
+      <div class="ad-cp-stats">
+        <span>合作 <b>${p.contracts}</b> 次（甲 ${p.as_party_a} / 乙 ${p.as_party_b}）</span>
+        <span>累计 <b>${fmtAmount(p.total_amount)}</b> 元</span>
+        <span>风险 <b>${p.findings}</b> 条（高 ${p.high} / 中 ${p.medium} / 低 ${p.low}）</span>
+      </div>
+      <div class="ad-cp-meta">
+        最近合作：${esc(p.last_at || "—")}${p.types && p.types.length
+          ? " · 类型：" + p.types.map(t => esc(t[0])).join("、") : ""}
+      </div>
+    </div>`).join("");
+  // 快捷加入黑名单：把名称填进表单，理由留给用户补
+  box.querySelectorAll(".ad-cp-bl").forEach(el => {
+    el.onclick = () => {
+      document.getElementById("adBlName").value = el.dataset.name;
+      document.getElementById("adBlReason").focus();
+    };
+  });
+}
+
+async function loadAuditInsights() {
+  const j = await (await fetch(API + "/api/audit/insights")).json();
+  const n = document.getElementById("adN-insights");
+  if (n) n.textContent = (j.summary || {}).count ?? 0;
+  const s = j.summary || {};
+  const dims = j.by_dimension || [];
+  const maxDim = Math.max(1, ...dims.map(d => d.count));
+  document.getElementById("adInsights").innerHTML = `
+    <div class="dash-card">
+      <div class="dash-card-head"><h3 class="dash-card-title">总体概览</h3><span class="dash-card-sub">已审合同口径</span></div>
+      <div class="ad-ins-sum">
+        ${[["已审合同", s.count ?? 0], ["总金额", fmtAmount(s.total_amount) + " 元"],
+           ["高风险率", (s.high_rate ?? 0) + "%"], ["风险条目", s.findings_total ?? 0]]
+          .map(([k, v]) => `<div class="ad-ins-kv"><span>${k}</span><b>${v}</b></div>`).join("")}
+      </div>
+    </div>
+    <div class="dash-card">
+      <div class="dash-card-head"><h3 class="dash-card-title">风险维度分布</h3><span class="dash-card-sub">风险条目按审查维度</span></div>
+      ${dims.length ? dims.map(d => `
+        <div class="biz-bar-row">
+          <span class="biz-bar-name" title="${esc(d.name)}">${esc(d.name)}</span>
+          <span class="biz-bar-track"><span class="biz-bar-fill ad-ins-bar" style="width:${(d.count / maxDim) * 100}%"></span></span>
+          <span class="biz-bar-num">${d.count}</span>
+        </div>`).join("") : `<div class="dash-empty">暂无风险条目</div>`}
+    </div>
+    <div class="dash-card">
+      <div class="dash-card-head"><h3 class="dash-card-title">高发问题排行</h3><span class="dash-card-sub">同类成因反复出现即为系统性问题</span></div>
+      ${(j.top_rules || []).length ? `<ol class="ad-rules">${j.top_rules.map(r => `
+        <li class="ad-rule-row">
+          <span class="ad-rule-name" title="${esc(r.reason)}">${esc(r.reason)}</span>
+          ${r.category ? `<span class="tag">${esc(r.category)}</span>` : ""}
+          <span class="ad-rule-n">×${r.count}</span>
+        </li>`).join("")}</ol>` : `<div class="dash-empty">暂无数据</div>`}
+    </div>`;
+}
+
+async function loadAuditBlacklist() {
+  const j = await (await fetch(API + "/api/audit/blacklist")).json();
+  const n = document.getElementById("adN-blacklist");
+  if (n) n.textContent = j.total ?? 0;
+  const box = document.getElementById("adBlacklist");
+  document.getElementById("adBlacklistEmpty").classList.toggle("hidden", (j.rows || []).length > 0);
+  box.innerHTML = (j.rows || []).map(r => `
+    <div class="ad-bl-row-item">
+      <span class="ad-bl-name" title="${esc(r.name)}">${esc(r.name)}</span>
+      <span class="ad-bl-reason" title="${esc(r.reason)}">${esc(r.reason || "—")}</span>
+      <span class="ad-bl-meta">${esc(r.at || "")}${r.operator ? " · " + esc(r.operator) : ""}</span>
+      <span class="link ad-bl-del" data-name="${esc(r.name)}">移出</span>
+    </div>`).join("");
+  box.querySelectorAll(".ad-bl-del").forEach(el => {
+    el.onclick = () => removeBlacklist(el.dataset.name);
+  });
+}
+
+async function addBlacklist() {
+  const name = document.getElementById("adBlName").value.trim();
+  const reason = document.getElementById("adBlReason").value.trim();
+  if (!name) { alert("请填写相对方名称"); return; }
+  const r = await fetch(API + "/api/audit/blacklist", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, reason, operator: session ? session.display_name : "" }),
+  });
+  if (!r.ok) {
+    const j = await r.json().catch(() => ({}));
+    alert(j.detail || "加入黑名单失败");
+    return;
+  }
+  document.getElementById("adBlName").value = "";
+  document.getElementById("adBlReason").value = "";
+  loadAuditBlacklist();
+}
+
+async function removeBlacklist(name) {
+  // 移出黑名单是破坏性操作：必须二次确认（与退出登录同一交互约定）
+  if (!confirm(`确定把「${name}」移出黑名单吗？`)) return;
+  const r = await fetch(API + "/api/audit/blacklist/remove", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name }),
+  });
+  if (!r.ok) {
+    const j = await r.json().catch(() => ({}));
+    alert(j.detail || "移出失败");
+    return;
+  }
+  loadAuditBlacklist();
+}
+
+// 审计页事件绑定：刷新 / 加入 / 搜索防抖 / 筛选与排序联动
+document.getElementById("adRefreshBtn").onclick = loadAudit;
+document.getElementById("adBlAddBtn").onclick = addBlacklist;
+document.getElementById("adKw").oninput = auditSearchKeyed;
+document.getElementById("adType").onchange = loadAuditLedger;
+document.getElementById("adRisk").onchange = loadAuditLedger;
+document.getElementById("adSort").onchange = loadAuditLedger;
 
 document.getElementById("uploadBtn").onclick = () => document.getElementById("fileInput").click();
 document.getElementById("fileInput").onchange = async (e) => {
