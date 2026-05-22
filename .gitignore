@@ -24,6 +24,7 @@ data/blacklist.json
 
 # ===== 日志 =====
 *.log
+logs/
 
 # ===== 编辑器 / 系统文件 =====
 .idea/
