@@ -55,7 +55,7 @@ from services.ocr_service import (
 # 电商业务事件风控子系统接口（挂载于 /api/risk）
 from risk_api import router as risk_router
 
-app = FastAPI(title="合同审批审查系统", version="1.0.0")
+app = FastAPI(title="契衡 · 合同审批审查系统", version="1.0.0")
 # 合同审查 + 电商风控同属一个项目，统一挂载在同一服务下
 app.include_router(risk_router)
 pipeline = ReviewPipeline()

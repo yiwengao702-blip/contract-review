@@ -1,4 +1,4 @@
-/* 合同审批审查系统 - 商务专业风样式 */
+/* 契衡 · 合同审批审查系统 - 商务专业风样式 */
 :root {
   --bg: #181f31;
   --card: #1c2438;
@@ -89,6 +89,14 @@ body {
   border: 1px solid rgba(200,214,235,0.183);
   display: inline-flex; align-items: center; justify-content: center;
   font-size: 16px;
+}
+/* 品牌双行：上行产品名「契衡」加粗，下行功能副标题收敛，
+   与登录页机构抬头（品牌名 + 部署标识）形成同一套层级语言 */
+.brand-text { display: flex; flex-direction: column; line-height: 1.25; }
+.brand-name { font-size: 15.5px; font-weight: 700; letter-spacing: 1.5px; }
+.brand-sub {
+  font-size: 10.5px; font-weight: 500; letter-spacing: 1px;
+  color: rgba(244,246,248,0.550); margin-top: 2px;
 }
 /* 导航竖排：一项一行、占满栏宽，移动端折回横排 */
 .nav { display: flex; flex-direction: column; gap: 4px; }

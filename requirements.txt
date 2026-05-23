@@ -1,4 +1,4 @@
-# 合同审批审查系统 - 依赖清单
+# 契衡 · 合同审批审查系统 - 依赖清单
 # 安装：pip install -r requirements.txt
 # 说明：核心依赖仅 fastapi/uvicorn/python-docx/pdfplumber/pyyaml。
 #       「拍照 / 图片识别」为可选能力，由 services/ocr_service.py 在运行时探测引擎可用性：
