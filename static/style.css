@@ -1011,29 +1011,39 @@ mark:hover { filter: brightness(.97); }
 
 /* ---------- 演示账号快捷登录（三角色） ---------- */
 .demo-accounts { margin-top: 18px; padding-top: 16px; border-top: 1px dashed var(--line); }
-.demo-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 10px; gap: 8px; }
+.demo-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 12px; gap: 8px; }
 .demo-label { font-size: 13px; font-weight: 600; color: var(--text); }
 .demo-tip { font-size: 11.5px; color: var(--muted); }
-.demo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.demo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 .demo-card {
-  text-align: left; cursor: pointer; font: inherit;
-  background: #192134; border: 1px solid var(--line); border-radius: 8px;
-  padding: 10px 11px; display: flex; flex-direction: column; gap: 3px;
-  transition: border-color .15s, transform .12s, background .15s;
+  display: flex; align-items: center; gap: 10px; text-align: left; cursor: pointer; font: inherit;
+  background: linear-gradient(180deg, #1b2438 0%, #182033 100%);
+  border: 1px solid var(--line); border-left: 3px solid transparent; border-radius: 10px;
+  padding: 11px 12px;
+  transition: border-color .18s, transform .14s, background .18s, box-shadow .18s;
 }
-.demo-card:hover { border-color: var(--primary); background: #1c273e; transform: translateY(-1px); }
-.demo-card:active { transform: scale(.98); }
+.demo-card:hover { transform: translateY(-2px); background: linear-gradient(180deg, #1f2a42 0%, #1a2236 100%); box-shadow: 0 6px 18px rgba(0,0,0,.45); }
+.demo-card:active { transform: scale(.985); }
+.demo-card.r-admin:hover { border-left-color: #6cc6f0; }
+.demo-card.r-legal:hover { border-left-color: #c08bf0; }
+.demo-card.r-biz:hover   { border-left-color: #4fd9b4; }
+.demo-ico { flex: 0 0 auto; width: 34px; height: 34px; border-radius: 9px; display: flex; align-items: center; justify-content: center; }
+.demo-card.r-admin .demo-ico { background: rgba(56,189,248,.14); color: #6cc6f0; }
+.demo-card.r-legal .demo-ico { background: rgba(168,85,247,.14); color: #c08bf0; }
+.demo-card.r-biz   .demo-ico { background: rgba(45,212,167,.14); color: #4fd9b4; }
+.demo-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .demo-role {
-  font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 20px;
-  align-self: flex-start; line-height: 1.6;
+  font-size: 10.5px; font-weight: 600; padding: 1px 7px; border-radius: 20px;
+  align-self: flex-start; line-height: 1.6; letter-spacing: .02em;
 }
 .demo-card.r-admin .demo-role { background: rgba(56,189,248,0.16); color: #6cc6f0; }
 .demo-card.r-legal .demo-role { background: rgba(168,85,247,0.16); color: #c08bf0; }
 .demo-card.r-biz   .demo-role { background: rgba(45,212,167,0.16); color: #4fd9b4; }
-.demo-name { font-size: 13.5px; font-weight: 600; color: var(--text); }
-.demo-mail { font-size: 11px; color: var(--muted); word-break: break-all; }
+.demo-name { font-size: 13.5px; font-weight: 600; color: var(--text); line-height: 1.25; }
+.demo-mail { font-size: 10.5px; color: var(--muted); word-break: break-all; }
 @media (max-width: 520px) {
   .demo-grid { grid-template-columns: 1fr; }
+  .demo-card { padding: 12px 14px; }
 }
 
 /* 演示账号区：加顶部细线做分区，更像正式系统的凭据表 */
