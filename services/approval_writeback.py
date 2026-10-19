@@ -47,7 +47,7 @@ class ApprovalWriteback:
         """
         seg_by_id = {s.segment_id: s for s in (segments or [])}
         lines: List[str] = []
-        lines.append(f"## 合同智能审查意见：{report.contract_name}")
+        lines.append(f"## 契衡 · 合同智能审查意见：{report.contract_name}")
         lines.append(f"- 业务类型：{report.contract_type}")
         lines.append(f"- 综合风险等级：**{report.overall_level.value}**")
 

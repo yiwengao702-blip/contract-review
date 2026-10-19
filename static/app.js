@@ -968,7 +968,7 @@ async function doWriteback(id) {
 function exportMarkdown(t) {
   if (!t.report) return;
   const rp = t.report;
-  let md = `## 合同审查意见：${rp.contract_name}\n\n- 业务类型：${rp.contract_type}\n- 综合风险等级：**${rp.overall_level}**\n\n> ${rp.summary}\n\n### 风险清单\n`;
+  let md = `## 契衡 · 合同审查意见：${rp.contract_name}\n\n- 业务类型：${rp.contract_type}\n- 综合风险等级：**${rp.overall_level}**\n\n> ${rp.summary}\n\n### 风险清单\n`;
   rp.findings.forEach((f, i) => {
     md += `${i + 1}. **[${f.level}] ${f.category}** —— ${f.reason}\n${f.recommendation ? "   - 建议修改：" + f.recommendation + "\n" : ""}`;
   });
@@ -977,7 +977,7 @@ function exportMarkdown(t) {
   const blob = new Blob([md], { type: "text/markdown" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = rp.contract_name + "_审查意见.md";
+  a.download = rp.contract_name + "_契衡审查意见.md";
   a.click();
 }
 
