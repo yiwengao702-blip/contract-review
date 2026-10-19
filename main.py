@@ -301,6 +301,7 @@ DEMO_ACCOUNTS = {
     "chenjingzhi@gmail.com":  {"password": "chenjingzhi",  "role": "admin", "role_name": "平台管理员",   "display_name": "陈敬之"},
     "zhoumingyuan@gmail.com": {"password": "zhoumingyuan", "role": "legal", "role_name": "法务合规经理", "display_name": "周明远"},
     "lisiqi@gmail.com":       {"password": "lisiqi",       "role": "biz",   "role_name": "采购业务经办", "display_name": "李思齐"},
+    "wanghaoran@gmail.com":   {"password": "wanghaoran",   "role": "biz",   "role_name": "采购业务经办", "display_name": "王浩然"},
 }
 
 # 自助注册用户持久化文件（演示环境用，明文存储仅作离线演示；生产应接入企业统一身份并哈希口令）。
