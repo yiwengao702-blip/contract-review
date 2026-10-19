@@ -1009,6 +1009,33 @@ mark:hover { filter: brightness(.97); }
 .login-switch a { color: var(--primary); text-decoration: none; font-weight: 600; }
 .login-switch a:hover { text-decoration: underline; }
 
+/* ---------- 演示账号快捷登录（三角色） ---------- */
+.demo-accounts { margin-top: 18px; padding-top: 16px; border-top: 1px dashed var(--line); }
+.demo-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 10px; gap: 8px; }
+.demo-label { font-size: 13px; font-weight: 600; color: var(--text); }
+.demo-tip { font-size: 11.5px; color: var(--muted); }
+.demo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.demo-card {
+  text-align: left; cursor: pointer; font: inherit;
+  background: #192134; border: 1px solid var(--line); border-radius: 8px;
+  padding: 10px 11px; display: flex; flex-direction: column; gap: 3px;
+  transition: border-color .15s, transform .12s, background .15s;
+}
+.demo-card:hover { border-color: var(--primary); background: #1c273e; transform: translateY(-1px); }
+.demo-card:active { transform: scale(.98); }
+.demo-role {
+  font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 20px;
+  align-self: flex-start; line-height: 1.6;
+}
+.demo-card.r-admin .demo-role { background: rgba(56,189,248,0.16); color: #6cc6f0; }
+.demo-card.r-legal .demo-role { background: rgba(168,85,247,0.16); color: #c08bf0; }
+.demo-card.r-biz   .demo-role { background: rgba(45,212,167,0.16); color: #4fd9b4; }
+.demo-name { font-size: 13.5px; font-weight: 600; color: var(--text); }
+.demo-mail { font-size: 11px; color: var(--muted); word-break: break-all; }
+@media (max-width: 520px) {
+  .demo-grid { grid-template-columns: 1fr; }
+}
+
 /* 演示账号区：加顶部细线做分区，更像正式系统的凭据表 */
 .demo-head { display: flex; justify-content: space-between; align-items: center; margin: 24px 0 10px; padding-top: 18px; border-top: 1px solid var(--line); font-size: 12.5px; color: #b7c2d1; }
 .demo-tag { border: 1px solid rgba(200,214,235,0.115); border-radius: 3px; padding: 2px 8px; font-size: 11.5px; color: #b7c2d1; }

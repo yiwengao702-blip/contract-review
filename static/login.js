@@ -88,6 +88,44 @@ async function doLogin() {
   }
 }
 
+// 演示账号一键登录：直接携带凭据登录，跳过表单填写
+async function quickLogin(account, password) {
+  const errBox = document.getElementById("loginError");
+  const btn = document.getElementById("loginBtn");
+  errBox.textContent = "";
+  btn.disabled = true;
+  btn.textContent = "登录中…";
+  try {
+    const r = await fetch(API + "/api/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ account, password }),
+    });
+    if (!r.ok) {
+      const j = await r.json().catch(() => ({}));
+      errBox.textContent = j.detail || "演示登录失败";
+      return;
+    }
+    const data = await r.json();
+    const params = new URLSearchParams(location.search);
+    enterApp(data, params.get("next"));
+  } catch (err) {
+    errBox.textContent = "网络异常，请稍后重试";
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "登 录";
+  }
+}
+
+// 演示账号卡片：点击即填充并一键登录
+document.querySelectorAll("#demoAccounts .demo-card").forEach(c => {
+  c.onclick = () => {
+    document.getElementById("account").value = c.dataset.account;
+    document.getElementById("password").value = c.dataset.password;
+    quickLogin(c.dataset.account, c.dataset.password);
+  };
+});
+
 // 自助注册（成功即自动登录）
 async function doRegister() {
   const account = document.getElementById("regAccount").value.trim();
