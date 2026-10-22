@@ -933,7 +933,8 @@ mark:hover { filter: brightness(.97); }
 .login-footnote { margin-top: 22px; padding-top: 16px; font-size: 11.5px; line-height: 1.9; color: #b6c1d0; border-top: 1px solid rgba(56,189,248,0.180); }
 
 /* ---- 右侧：登录卡 ---- */
-.login-panel { display: flex; align-items: center; justify-content: center; padding: 40px; }
+/* min-width:0：避免作为 grid 项时被输入框固有宽度撑破视口 */
+.login-panel { display: flex; align-items: center; justify-content: center; padding: 40px; min-width: 0; }
 .login-card {
   position: relative; width: 100%; max-width: 392px; background: #1c2438;
   border: 1px solid rgba(200,214,235,0.113); border-radius: 6px; padding: 36px 34px 32px;
@@ -966,7 +967,7 @@ mark:hover { filter: brightness(.97); }
 }
 .login-field:focus-within { border-color: var(--primary); background: #1c2438; box-shadow: 0 0 0 3px rgba(0,0,0,0.600); }
 .login-field .f-ico { color: #acb7c8; display: flex; }
-.login-field input { flex: 1; border: 0; outline: 0; background: transparent; padding: 12px 10px; font-size: 14px; color: var(--text); }
+.login-field input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; padding: 12px 10px; font-size: 14px; color: var(--text); }
 /* 注册角色下拉框：与输入框同款暗色处理，自定义下拉箭头（原生 popup 由系统绘制） */
 .login-field select {
   flex: 1; border: 0; outline: 0; background-color: transparent;
@@ -1014,9 +1015,10 @@ mark:hover { filter: brightness(.97); }
 .demo-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 12px; gap: 8px; }
 .demo-label { font-size: 13px; font-weight: 600; color: var(--text); }
 .demo-tip { font-size: 11.5px; color: var(--muted); }
-.demo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+/* 卡片内容宽度仅 ~324px，三列会挤压邮箱并横向溢出，统一改为单列堆叠 */
+.demo-grid { display: grid; grid-template-columns: 1fr; gap: 8px; }
 .demo-card {
-  display: flex; align-items: center; gap: 10px; text-align: left; cursor: pointer; font: inherit;
+  display: flex; align-items: center; gap: 10px; text-align: left; cursor: pointer; font: inherit; min-width: 0;
   background: linear-gradient(180deg, #1b2438 0%, #182033 100%);
   border: 1px solid var(--line); border-left: 3px solid transparent; border-radius: 10px;
   padding: 11px 12px;
@@ -1040,10 +1042,14 @@ mark:hover { filter: brightness(.97); }
 .demo-card.r-legal .demo-role { background: rgba(168,85,247,0.16); color: #c08bf0; }
 .demo-card.r-biz   .demo-role { background: rgba(45,212,167,0.16); color: #4fd9b4; }
 .demo-name { font-size: 13.5px; font-weight: 600; color: var(--text); line-height: 1.25; }
-.demo-mail { font-size: 10.5px; color: var(--muted); word-break: break-all; }
-@media (max-width: 520px) {
-  .demo-grid { grid-template-columns: 1fr; }
+.demo-mail { font-size: 10.5px; color: var(--muted); word-break: break-all; overflow-wrap: anywhere; }
+@media (max-width: 560px) {
+  /* 手机端收紧内外边距，保证卡片内容不被压缩 */
+  .login-panel { padding: 22px 14px; align-items: flex-start; }
+  .login-card { padding: 26px 20px 24px; }
+  .login-card-title { font-size: 18px; letter-spacing: 2px; }
   .demo-card { padding: 12px 14px; }
+  .brand-marks { gap: 9px; }
 }
 
 /* 演示账号区：加顶部细线做分区，更像正式系统的凭据表 */
